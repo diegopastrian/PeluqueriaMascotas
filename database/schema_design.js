@@ -1,0 +1,1 @@
+// para describir colecciones y estructura de los documentos.
