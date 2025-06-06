@@ -4,55 +4,69 @@ const { buildTransaction, parseResponse } = require('../../bus_service_helpers/t
 
 const BUS_HOST = 'localhost';
 const BUS_PORT = 5000;
+const SERVICE_TO_CALL = "SALDS"; // Usamos siempre el mismo código de servicio
 
 const clientSocketToBus = new net.Socket();
+let testStep = 'hola';
 
 clientSocketToBus.connect(BUS_PORT, BUS_HOST, () => {
-    console.log(`[CLIENTE_PING] Conectado al Bus de Servicios en ${BUS_HOST}:${BUS_PORT}`);
+    console.log(`[CLIENTE] Conectado al Bus de Servicios en ${BUS_HOST}:${BUS_PORT}`);
 
-    const serviceToCall = "PINGG";
-    const dataForPing = "EcoDesdeCliente123";
-    const transactionRequest = buildTransaction(serviceToCall, dataForPing);
+    // --- Inicia la prueba: Enviar comando "hola" ---
+    const command = "hola";
+    // El formato de datos ahora es: comando;otros_datos
+    const dataForService = `${command};ClienteDePrueba`;
+    const transactionRequest = buildTransaction(SERVICE_TO_CALL, dataForService);
 
-    console.log(`[CLIENTE_PING] Enviando transacción al bus: ${transactionRequest}`);
+    console.log(`[CLIENTE] 1. Enviando transacción al servicio '${SERVICE_TO_CALL}' con comando '${command}'...`);
     clientSocketToBus.write(transactionRequest);
 });
 
 clientSocketToBus.on('data', (data) => {
     const rawResponseFromBus = data.toString();
-    console.log(`[CLIENTE_PING] Respuesta cruda recibida del Bus: ${rawResponseFromBus}`);
+    console.log(`[CLIENTE] <- Respuesta cruda recibida del Bus: ${rawResponseFromBus}`);
+    
     try {
         const parsed = parseResponse(rawResponseFromBus);
-        console.log('[CLIENTE_PING] Respuesta del Bus parseada:', parsed);
+        // La respuesta del servicio ahora viene con el comando, lo separamos
+        const responseParts = parsed.data.split(';');
+        const responseCommand = responseParts[0];
+        const responsePayload = responseParts[1];
 
-        if (parsed.serviceName === "PINGG") {
-            if (parsed.status === "OK") {
-                console.log(`[CLIENTE_PING] Respuesta OK del servicio PINGG a través del Bus.`);
-                console.log(`[CLIENTE_PING] Datos recibidos: ${parsed.data}`);
-                if (parsed.data === "EcoDesdeCliente123") {
-                    console.log("¡PRUEBA PINGG EXITOSA! El servicio hizo echo correctamente.");
-                } else {
-                    console.error("FALLO LA PRUEBA PINGG: Los datos del echo no coinciden.");
-                }
-            } else if (parsed.status === "NK") {
-                console.error(`[CLIENTE_PING] Respuesta NK del servicio PINGG a través del Bus: ${parsed.data}`);
+        if (testStep === 'hola') {
+            console.log("[CLIENTE] 2. Procesando respuesta para comando 'hola'");
+            if (parsed.serviceName === SERVICE_TO_CALL && parsed.status === "OK" && responseCommand === "hola" && responsePayload === "Holaa!!!") {
+                console.log("   -> ¡PRUEBA HOLA EXITOSA!");
+                
+                // --- Procedemos a la siguiente prueba: Enviar comando "chao" ---
+                testStep = 'chao';
+                const command = "chao";
+                const dataForService = `${command};ClienteDePrueba`;
+                const transactionRequest = buildTransaction(SERVICE_TO_CALL, dataForService);
+                console.log(`[CLIENTE] 3. Enviando transacción al servicio '${SERVICE_TO_CALL}' con comando '${command}'...`);
+                clientSocketToBus.write(transactionRequest);
+
             } else {
-                console.error(`[CLIENTE_PING] Estado de respuesta desconocido para PINGG: ${parsed.status}`);
+                console.error("   -> FALLO LA PRUEBA HOLA: La respuesta no fue la esperada.");
+                clientSocketToBus.destroy();
             }
-        } else {
-             console.warn(`[CLIENTE_PING] Respuesta del bus para un servicio inesperado: ${parsed.serviceName}`);
+
+        } else if (testStep === 'chao') {
+            console.log("[CLIENTE] 4. Procesando respuesta para comando 'chao'");
+            if (parsed.serviceName === SERVICE_TO_CALL && parsed.status === "OK" && responseCommand === "chao" && responsePayload === "Chaoo!!!") {
+                console.log("   -> ¡PRUEBA CHAOO EXITOSA!");
+                console.log("\n*** ¡NUEVO MODELO VALIDADO EXITOSAMENTE! ***");
+            } else {
+                console.error("   -> FALLO LA PRUEBA CHAOO: La respuesta no fue la esperada.");
+            }
+            clientSocketToBus.destroy();
         }
 
     } catch (e) {
-        console.error("[CLIENTE_PING] Error parseando la respuesta del Bus:", e.message);
+        console.error("[CLIENTE] Error parseando la respuesta del Bus:", e.message, "Raw data:", rawResponseFromBus);
+        clientSocketToBus.destroy();
     }
-    clientSocketToBus.destroy(); // Cerramos después de la primera respuesta para esta prueba.
 });
 
-clientSocketToBus.on('close', () => {
-    console.log('[CLIENTE_PING] Conexión con el Bus cerrada.');
-});
-
-clientSocketToBus.on('error', (err) => {
-    console.error('[CLIENTE_PING] Error de conexión con el Bus:', err.message);
-});
+clientSocketToBus.on('close', () => console.log('[CLIENTE] Conexión con el Bus cerrada.'));
+clientSocketToBus.on('error', (err) => console.error('[CLIENTE] Error de conexión:', err.message));
