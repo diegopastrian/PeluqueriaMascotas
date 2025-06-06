@@ -1,6 +1,6 @@
 # Proyecto Peluquería de Mascotas - Arquitectura de Software
 
-Este repositorio contiene el proyecto para el curso de Arquitectura de Software, enfocado en el desarrollo de un sistema de gestión para una peluquería de mascotas. El sistema implementa una Arquitectura Orientada a Servicios (SOA) y utiliza el stack MERN (MongoDB, Express.js, React, Node.js).
+Este repositorio contiene el proyecto para el curso de Arquitectura de Software, enfocado en el desarrollo de un sistema de gestión para una peluquería de mascotas. El sistema implementa una Arquitectura Orientada a Servicios (SOA) y utiliza el stack MERN (PostgreSQL, Express.js, React, Node.js).
 
 ## Descripción General del Sistema
 
@@ -12,12 +12,12 @@ El sistema sigue una **Arquitectura Orientada a Servicios (SOA)**. Las funcional
 
 *   **Clientes (React):** Interfaces de usuario para diferentes roles (C1: Usuarios, C2: Empleados, C3: Administradores).
 *   **Servicios (Node.js/Express.js):** Lógica de negocio backend (S1: Gestión de Citas, S2: Gestión de Clientes, etc.).
-*   **Base de Datos (MongoDB):** Almacenamiento de datos.
+*   **Base de Datos (PostgreSQL):** Almacenamiento de datos.
 *   **Bus de Servicios:** Canal de comunicación entre clientes y servicios.
 
 ## Stack Tecnológico
 
-*   **Base de Datos:** MongoDB
+*   **Base de Datos:** PostgreSQL
 *   **Backend (Servicios):** Node.js, Express.js
 *   **Frontend (Clientes):** React (utilizando Vite para la creación de proyectos)
 *   **Lenguaje Principal:** JavaScript (con opción a TypeScript)
@@ -32,13 +32,13 @@ El proyecto está organizado de la siguiente manera:
         *   `sX_nombre_servicio/`:
             *   `server.js`: Punto de entrada del servicio.
             *   `controllers/`: Lógica de negocio para las transacciones.
-            *   `models/`: Esquemas de Mongoose para MongoDB.
+            *   `models/`: Esquemas de Mongoose para PostgreSQL.
             *   `package.json`: Dependencias del servicio.
     *   `clients/`: Contiene un subdirectorio para cada aplicación cliente React (C1-C3).
         *   `cX_nombre_cliente/`:
             *   `src/`: Código fuente de la aplicación React.
             *   `package.json`: Dependencias del cliente.
-    *   `database/`: Scripts de configuración de base de datos, seeds, y diseño del esquema de MongoDB.
+    *   `database/`: Scripts de configuración de base de datos, seeds, y diseño del esquema de PostgreSQL.
     *   `docs/`: Documentación del proyecto, incluyendo la definición de las transacciones del bus (`SSSSS` y formato de `DATOS`) para cada servicio.
     *   `docker-compose.yml`: (Opcional) Para orquestar el entorno de desarrollo con Docker.
     *   `.gitignore`: Especifica los archivos y directorios ignorados por Git.
@@ -48,7 +48,7 @@ El proyecto está organizado de la siguiente manera:
 
 *   Node.js (se recomienda una versión >= 18.18.0 o >= 20.9.0, verificar dependencias)
 *   npm (generalmente viene con Node.js)
-*   MongoDB (instalado localmente o accesible)
+*   PostgreSQL (instalado localmente o accesible)
 *   Docker (para ejecutar el Bus de Servicios provisto)
 
 ## Configuración y Ejecución
@@ -80,7 +80,7 @@ El proyecto está organizado de la siguiente manera:
     ```
 
 4.  **Configurar Variables de Entorno:**
-    Cada servicio podría requerir variables de entorno (ej. URI de conexión a MongoDB, puerto del servicio). Crear archivos `.env` según sea necesario (y asegurarse de que `.env` esté en `.gitignore`).
+    Cada servicio podría requerir variables de entorno (ej. URI de conexión a PostgreSQL, puerto del servicio). Crear archivos `.env` según sea necesario (y asegurarse de que `.env` esté en `.gitignore`).
 
 5.  **Ejecutar los Servicios Backend:**
     Navegar a cada directorio de servicio y ejecutar su script de inicio (ej. `npm start` o `npm run dev` si se usa `nodemon`):
