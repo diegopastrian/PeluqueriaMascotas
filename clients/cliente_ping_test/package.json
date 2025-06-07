@@ -1,0 +1,14 @@
+{
+  "name": "cliente_ping_test",
+  "version": "1.0.0",
+  "description": "Cliente de prueba para interactuar con el Bus de Servicios y el servicio S2 (clientes)",
+  "main": "test_login_register.js",
+  "scripts": {
+    "start": "node test_login_register.js",
+    "ping": "node pingTest.js"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "dependencies": {}
+}

@@ -116,9 +116,10 @@ CREATE TABLE orden_productos
 CREATE TABLE preferencias
 (
     id_preferencia SERIAL PRIMARY KEY,
-    id_cliente     INTEGER REFERENCES clientes (id_cliente),
+    id_cliente     INTEGER REFERENCES clientes (id_cliente) ON DELETE CASCADE, -- Añadido ON DELETE CASCADE para coherencia
     tipo           VARCHAR(20) NOT NULL, -- 'producto' o 'servicio'
-    id_referencia  INTEGER     NOT NULL  -- ID del producto o servicio
+    id_referencia  INTEGER     NOT NULL, -- ID del producto o servicio
+    UNIQUE (id_cliente, tipo, id_referencia) 
 );
 
 -- Notificaciones enviadas al cliente
