@@ -11,10 +11,10 @@ clientSocket.connect(BUS_PORT, BUS_HOST, () => {
     
     // Prueba de registro
     const service = 'CLIEN';
-    /*const registerData = 'registrar;Juan;Perez;rian.perez@example.com;contrasena123;1234567890';
+    const registerData = 'registrar;Juan;Perez;rian.perez@example.com;contrasena123;1234567890';
     const registerRequest = buildTransaction(service, registerData);
     console.log('Enviando solicitud de registro:', registerRequest);
-    clientSocket.write(registerRequest);*/
+    clientSocket.write(registerRequest);
 
     // Prueba de login
     setTimeout(() => {
