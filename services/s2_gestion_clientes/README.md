@@ -6,6 +6,6 @@ acivar servicio desde directorio raiz
   ```
  
 desde directorio raiz realizar el test
-    ```bash
+   ```bash
     node .\clients\cliente_ping_test\test.js
-    ```
+   ```
