@@ -2,32 +2,82 @@
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const pool = require('../db');
-const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper'); // Ajusta la ruta si es necesario
+const pool = require('../db'); // Asume que db.js está en el directorio raíz del servicio
+const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper'); // Ajusta esta ruta si tu estructura es diferente
 const { SERVICE_CODE, SERVICE_NAME_CODE, SECRET_KEY } = require('../config');
 
-// Copiamos la lógica de 'registrar' del server.js original aquí.
+/**
+ * Maneja el registro de un nuevo cliente.
+ * Operación: registrar;nombre;apellido;correo;password;telefono
+ * @param {string[]} fields - Los datos de la operación, divididos por ';'.
+ * @param {net.Socket} socket - El socket para enviar la respuesta al bus.
+ */
 function handleRegister(fields, socket) {
-    // ... (La lógica de validación y de base de datos para registrar es EXACTAMENTE la misma que tenías)
-    // ... la copio aquí para que veas que no cambia.
-    if (fields.length !== 6) { /* ... enviar error ... */ return; }
+    if (fields.length !== 6) {
+        const responseData = `registrar;Formato invalido: Se esperan 6 campos`;
+        const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+        socket.write(errorResponse);
+        return;
+    }
+
     const [, nombre, apellido, correo, password_plain, telefono] = fields;
-    if (!nombre || !apellido || !correo || !password_plain || !telefono) { /* ... enviar error ... */ return; }
+
+    if (!nombre || !apellido || !correo || !password_plain || !telefono) {
+        const responseData = `registrar;Todos los campos son obligatorios`;
+        const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+        socket.write(errorResponse);
+        return;
+    }
+
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
-    if (!emailRegex.test(correo)) { /* ... enviar error ... */ return; }
+    if (!emailRegex.test(correo)) {
+        const responseData = `registrar;Correo invalido`;
+        const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+        socket.write(errorResponse);
+        return;
+    }
 
+    // Verificar si el correo ya existe
     pool.query('SELECT id_cliente FROM clientes WHERE email = $1', [correo], (err, result) => {
-        if (err || result.rows.length > 0) { /* ... enviar error de correo existente o de DB ... */ return; }
+        if (err) {
+            console.error(`[${SERVICE_NAME_CODE}] Error en DB al verificar correo: ${err.message}`);
+            const responseData = `registrar;Error interno al verificar el correo`;
+            const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+            socket.write(errorResponse);
+            return;
+        }
 
+        if (result.rows.length > 0) {
+            const responseData = `registrar;El correo ya esta registrado`;
+            const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+            socket.write(errorResponse);
+            return;
+        }
+
+        // Hashear la contraseña
         bcrypt.hash(password_plain, 10, (err, hashedPassword) => {
-            if (err) { /* ... enviar error de hash ... */ return; }
+            if (err) {
+                console.error(`[${SERVICE_NAME_CODE}] Error al hashear contrasena: ${err.message}`);
+                const responseData = `registrar;Error interno al procesar la contrasena`;
+                const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+                socket.write(errorResponse);
+                return;
+            }
 
+            // Insertar el nuevo cliente en la base de datos
             pool.query(
                 `INSERT INTO clientes (nombre, apellido, email, telefono, password, es_invitado) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_cliente, email`,
                 [nombre, apellido, correo, telefono, hashedPassword, false],
-                (err, result) => {
-                    if (err) { /* ... enviar error de inserción ... */ return; }
-                    const { id_cliente, email } = result.rows[0];
+                (err, insertResult) => {
+                    if (err) {
+                        console.error(`[${SERVICE_NAME_CODE}] Error al insertar cliente: ${err.message}`);
+                        const responseData = `registrar;Error interno al registrar el cliente`;
+                        const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+                        socket.write(errorResponse);
+                        return;
+                    }
+
+                    const { id_cliente, email } = insertResult.rows[0];
                     console.log(`[${SERVICE_NAME_CODE}] Cliente creado: ID=${id_cliente}, Correo=${email}`);
                     const responseData = `registrar;${id_cliente};${email}`;
                     const response = buildTransaction(SERVICE_CODE, responseData, 'OK');
@@ -38,20 +88,65 @@ function handleRegister(fields, socket) {
     });
 }
 
-// Copiamos la lógica de 'login' del server.js original aquí.
+/**
+ * Maneja la autenticación de un cliente.
+ * Operación: login;correo;password
+ * @param {string[]} fields - Los datos de la operación, divididos por ';'.
+ * @param {net.Socket} socket - El socket para enviar la respuesta al bus.
+ */
 function handleLogin(fields, socket) {
-    // ... (La lógica de validación y de base de datos para login es EXACTAMENTE la misma que tenías)
-    if (fields.length !== 3) { /* ... enviar error ... */ return; }
-    const [, correo, password_plain] = fields;
-    if (!correo || !password_plain) { /* ... enviar error ... */ return; }
+    if (fields.length !== 3) {
+        const responseData = `login;Formato invalido: Se esperan 3 campos`;
+        const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+        socket.write(errorResponse);
+        return;
+    }
 
+    const [, correo, password_plain] = fields;
+
+    if (!correo || !password_plain) {
+        const responseData = `login;Correo y contrasena son obligatorios`;
+        const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+        socket.write(errorResponse);
+        return;
+    }
+
+    // Buscar usuario por correo
     pool.query('SELECT id_cliente, nombre, password FROM clientes WHERE email = $1', [correo], (err, result) => {
-        if (err || result.rows.length === 0) { /* ... enviar error de usuario no encontrado o de DB ... */ return; }
+        if (err) {
+            console.error(`[${SERVICE_NAME_CODE}] Error en DB durante login: ${err.message}`);
+            const responseData = `login;Error interno al autenticar`;
+            const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+            socket.write(errorResponse);
+            return;
+        }
+
+        if (result.rows.length === 0) {
+            const responseData = `login;Correo no encontrado`;
+            const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+            socket.write(errorResponse);
+            return;
+        }
 
         const user = result.rows[0];
+        // Comparar la contraseña proporcionada con el hash almacenado
         bcrypt.compare(password_plain, user.password, (err, isValid) => {
-            if (err || !isValid) { /* ... enviar error de contraseña incorrecta ... */ return; }
+            if (err) {
+                console.error(`[${SERVICE_NAME_CODE}] Error al comparar hash: ${err.message}`);
+                const responseData = `login;Error interno al validar credenciales`;
+                const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+                socket.write(errorResponse);
+                return;
+            }
 
+            if (!isValid) {
+                const responseData = `login;Contrasena incorrecta`;
+                const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+                socket.write(errorResponse);
+                return;
+            }
+
+            // Generar JWT si las credenciales son correctas
             const token = jwt.sign({ id: user.id_cliente, correo: correo }, SECRET_KEY, { expiresIn: '1h' });
             const responseData = `login;${token};${user.id_cliente};${user.nombre}`;
             const response = buildTransaction(SERVICE_CODE, responseData, 'OK');
@@ -60,6 +155,7 @@ function handleLogin(fields, socket) {
     });
 }
 
+// Exportamos las funciones para que puedan ser usadas por server.js
 module.exports = {
     handleRegister,
     handleLogin
