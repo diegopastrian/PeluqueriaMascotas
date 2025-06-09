@@ -1,0 +1,16 @@
+{
+  "name": "admin-ui",
+  "version": "1.0.0",
+  "description": "Interfaz de consola para administrador de autenticación de empleados",
+  "main": "src/client.js",
+  "scripts": {
+    "start": "node src/client.js"
+  },
+  "dependencies": {
+    "dotenv": "^16.0.3",
+    "inquirer": "^8.2.4",
+    "net": "^1.0.2"
+  },
+  "author": "",
+  "license": "ISC"
+}
