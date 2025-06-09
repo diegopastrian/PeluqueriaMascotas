@@ -1,6 +1,6 @@
 const { Pool } = require('pg')
 const path = require('path');
-require('dotenv').config({ path: path.resolve(__dirname, '../.env.global') });
+require('dotenv').config({ path: path.resolve(__dirname, './../.env.global') });
 
 const pool = new Pool({
     user: process.env.DB_USER,
