@@ -1,7 +1,7 @@
 // server.js
 const net = require('net');
 const { buildTransaction, parseResponse } = require('../../bus_service_helpers/transactionHelper');
-const pool = require('./db');
+const {pool} = require('./db');
 
 // Configuración del Bus de Servicios
 const BUS_HOST = 'localhost';

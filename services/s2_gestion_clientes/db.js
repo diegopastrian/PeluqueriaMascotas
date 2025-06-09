@@ -1,5 +1,6 @@
 // db.js
 const { Pool } = require('pg');
+require('dotenv').config()
 
 const pool = new Pool({
     user: 'postgres',
@@ -9,4 +10,4 @@ const pool = new Pool({
     port: 5432,
 });
 
-module.exports = pool;
+module.exports = { pool };

@@ -56,16 +56,13 @@ async function handleLoggedOutState() {
 async function handleLoggedInState() {
     const choice = await ui.showUserMenu(username);
     switch (choice) {
-        case '1': // Guardar pref. producto
-            await preferenceActions.handleSavePreference('producto');
+        case '1': // Ajustar Preferencias
+            await preferenceActions.handlePreferencesSubMenu(authToken);
             break;
-        case '2': // Guardar pref. servicio
-            await preferenceActions.handleSavePreference('servicio');
+        case '2': // Gestionar Mascotas
+            await petActions.handlePetManagement(authToken);
             break;
-        case '3': // Listar preferencias
-            await preferenceActions.handleListPreferences();
-            break;
-        case '4': // Logout
+        case '3': // Logout
             const logoutResult = await authActions.handleLogout();
             username = logoutResult.username;
             authToken = logoutResult.authToken;
@@ -76,5 +73,15 @@ async function handleLoggedInState() {
     }
 }
 
+async function main() {
+    try {
+        await bus.connect();
+        await mainLoop();
+    } catch (error) {
+        console.error('Error fatal en la aplicación:', error);
+    } finally {
+        bus.disconnect();
+    }
+}
 
 main();

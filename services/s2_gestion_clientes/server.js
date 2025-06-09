@@ -9,6 +9,7 @@ const { parseResponse, buildTransaction } = require('../../bus_service_helpers/t
 const config = require('./config');
 const authHandler = require('./handlers/authHandler');
 const preferenceHandler = require('./handlers/preferenceHandler');
+const petHandler = require('./handlers/petHandler');
 
 const serviceSocketToBus = new net.Socket();
 
@@ -41,7 +42,7 @@ function sendSinit(callback) {
 
 // --- 3. LISTENER PRINCIPAL (ahora es un enrutador) ---
 // Este es el corazón del servicio, escucha continuamente los mensajes del bus.
-serviceSocketToBus.on('data', (data) => {
+serviceSocketToBus.on('data', async (data) => {
     const rawData = data.toString();
     // El bus puede enviar múltiples mensajes concatenados, los separamos.
     const messages = rawData.match(/\d{5}[A-Z]{5}(?:OK|NK)?.*?(?=\d{5}[A-Z]{5}|$)/g) || [rawData];
@@ -65,24 +66,42 @@ serviceSocketToBus.on('data', (data) => {
             // --- EL ENRUTADOR ---
             // Delega la lógica de negocio al manejador apropiado según la operación.
             switch (operation) {
+                // auth
                 case 'registrar':
                     authHandler.handleRegister(fields, serviceSocketToBus);
                     break;
                 case 'login':
                     authHandler.handleLogin(fields, serviceSocketToBus);
                     break;
-                case 'PREFG':
+                // preferencias
+                case 'PREFG': //CAMBIAR EL NOMBNRE 
                     preferenceHandler.handleSavePreference(fields, serviceSocketToBus);
                     break;
-                case 'PREFL':
+                case 'listar_pref':
                     preferenceHandler.handleListPreferences(fields, serviceSocketToBus);
                     break;
-                default:
-                    console.warn(`[${config.SERVICE_NAME_CODE}] Operación desconocida: ${operation}`);
-                    const response = buildTransaction(config.SERVICE_CODE, `${operation};Operacion desconocida`, 'NK');
-                    serviceSocketToBus.write(response);
+                case 'PREFD':
+                    response = await preferenceHandler.handleDeletePreference(data, token);
                     break;
-            }
+                // mascotas
+                 case 'MASCR':
+                    response = await petHandler.createPet(data);
+                    break;
+                case 'MASLI':
+                    response = await petHandler.listPets(data);
+                    break;
+                case 'MASUP':
+                    response = await petHandler.updatePet(data);
+                    break;
+                case 'MASDE':
+                    response = await petHandler.deletePet(data);
+                    break;
+                    default:
+                        console.warn(`[${config.SERVICE_NAME_CODE}] Operación desconocida: ${operation}`);
+                        const response = buildTransaction(config.SERVICE_CODE, `${operation};Operacion desconocida`, 'NK');
+                        serviceSocketToBus.write(response);
+                        break;
+                }
         } catch (error) {
             console.error(`[${config.SERVICE_NAME_CODE}] Error fatal procesando mensaje: ${error.message}`);
             // Opcional: Enviar una respuesta de error genérica al bus si es apropiado.
@@ -93,8 +112,6 @@ serviceSocketToBus.on('data', (data) => {
 });
 
 
-// --- 4. INICIO DEL SERVICIO (se queda aquí) ---
-console.log(`[${config.SERVICE_NAME_CODE}] Iniciando servicio...`);
 
 // Health check para monitoreo (ej. con Docker, Kubernetes, etc.)
 const healthApp = express();
@@ -105,12 +122,10 @@ healthApp.get('/health', (req, res) => {
     res.status(status).send(message);
 });
 healthApp.listen(config.HEALTH_PORT, () => {
-    console.log(`[${config.SERVICE_NAME_CODE}] Health check disponible en http://localhost:${config.HEALTH_PORT}/health`);
 });
 
 // Conectar al bus e iniciar el servicio.
 serviceSocketToBus.connect(config.BUS_PORT, config.BUS_HOST, () => {
-    console.log(`[${config.SERVICE_NAME_CODE}] Conectado al Bus en ${config.BUS_HOST}:${config.BUS_PORT}`);
     sendSinit((err) => {
         if (err) {
             console.error('Fallo CRÍTICO en la activación del servicio. Terminando.', err);
