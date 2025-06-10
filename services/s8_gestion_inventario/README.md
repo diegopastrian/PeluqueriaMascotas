@@ -6,7 +6,7 @@
     node server.js
     ```
 
-2.  **Ejecutar el autenticador de empleados:**
+2.  **Ejecutar en otra consola el autenticador de empleados:**
     ```bash
     node .\auth_administracion\emplserv.js
     ```
