@@ -3,21 +3,21 @@ const net = require('net');
 const { buildTransaction, parseResponse } = require('../../bus_service_helpers/transactionHelper');
 const {pool} = require('./db');
 
-// Configuración del Bus de Servicios
+// Configuracion del Bus de Servicios
 const BUS_HOST = 'localhost';
 const BUS_PORT = 5000;
 
-// Código del servicio
+// Codigo del servicio
 const SERVICE_CODE = 'CATAL';
 const SERVICE_NAME_CODE = 'CATAL'; // Nombre para logs
 
-// Conexión al Bus
+// Conexion al Bus
 const serviceSocketToBus = new net.Socket();
 
-// Función para enviar SINIT
+// Funcion para enviar SINIT
 function sendSinit(callback) {
     const sinitTransaction = buildTransaction('sinit', SERVICE_CODE);
-    console.log(`[${SERVICE_NAME_CODE}] Enviando transacción de activación: ${sinitTransaction}`);
+    console.log(`[${SERVICE_NAME_CODE}] Enviando transaccion de activacion: ${sinitTransaction}`);
     serviceSocketToBus.write(sinitTransaction);
 
     const onData = (data) => {
@@ -48,7 +48,7 @@ serviceSocketToBus.connect(BUS_PORT, BUS_HOST, () => {
     console.log(`[${SERVICE_NAME_CODE}] Conectado al Bus en ${BUS_HOST}:${BUS_PORT}`);
     sendSinit((error) => {
         if (error) {
-            console.error(`[${SERVICE_NAME_CODE}] Error durante la activación: ${error.message}`);
+            console.error(`[${SERVICE_NAME_CODE}] Error durante la activacion: ${error.message}`);
             serviceSocketToBus.destroy();
             return;
         }
@@ -77,13 +77,13 @@ serviceSocketToBus.on('data', (data) => {
 
             const fields = parsed.data.split(';');
             if (fields.length < 1) {
-                const errorResponse = buildTransaction(SERVICE_CODE, `Formato invalido: Se espera operación`);
+                const errorResponse = buildTransaction(SERVICE_CODE, `Formato invalido: Se espera operacion`);
                 serviceSocketToBus.write(errorResponse);
                 continue;
             }
 
             const operation = fields[0];
-            console.log(`[${SERVICE_NAME_CODE}] Procesando operación: ${operation}`);
+            console.log(`[${SERVICE_NAME_CODE}] Procesando operacion: ${operation}`);
 
             // --- Registrar Producto ---
             if (operation === 'registrar') {
@@ -157,7 +157,7 @@ serviceSocketToBus.on('data', (data) => {
             }
 
             else {
-                const errorResponse = buildTransaction(SERVICE_CODE, `${operation};Operación desconocida`);
+                const errorResponse = buildTransaction(SERVICE_CODE, `${operation};Operacion desconocida`);
                 serviceSocketToBus.write(errorResponse);
             }
         } catch (error) {
@@ -168,7 +168,7 @@ serviceSocketToBus.on('data', (data) => {
 });
 
 serviceSocketToBus.on('close', () => {
-    console.log(`[${SERVICE_NAME_CODE}] Conexión cerrada`);
+    console.log(`[${SERVICE_NAME_CODE}] Conexion cerrada`);
 });
 
 serviceSocketToBus.on('error', (err) => {
@@ -188,7 +188,7 @@ healthApp.listen(HEALTH_PORT, () => {
 
 console.log(`[${SERVICE_NAME_CODE}] Iniciando servicio...`);
 
-// API REST opcional para debug o conexión directa
+// API REST opcional para debug o conexion directa
 const app = express();
 app.use(express.json());
 
@@ -203,5 +203,5 @@ app.get('/productos', async (req, res) => {
 });
 
 app.listen(3007, () => {
-    console.log('S3 catálogo escuchando en puerto 3004');
+    console.log('S3 catalogo escuchando en puerto 3004');
 });

@@ -11,7 +11,7 @@ function verifyToken(token) {
         };
     } catch (err) {
         console.error(`[${SERVICE_NAME_CODE}] Error verificando token: ${err.message}`);
-        return { success: false, message: 'Token inválido o expirado' };
+        return { success: false, message: 'Token invalido o expirado' };
     }
 }
 

@@ -4,6 +4,7 @@ const bus = require('./services/busService');
 const ui = require('./ui/consoleUI');
 const authActions = require('./actions/AuthActions');
 const preferenceActions = require('./actions/preferenceActions');
+const petActions = require('./actions/petActions');
 let authToken = null;
 let username = '';
 
@@ -11,13 +12,13 @@ async function main() {
     console.log('--- Cliente Web de Usuarios (Consola) ---');
     bus.connect();
 
-    // Esperar a que el bus se conecte antes de mostrar el menú
+    // Esperar a que el bus se conecte antes de mostrar el menu
     bus.on('connect', () => {
         mainLoop();
     });
 
     bus.on('error', (err) => {
-        console.error('Error crítico, la aplicación se cerrará.');
+        console.error('Error critico, la aplicacion se cerrara.');
         ui.close();
     });
 }
@@ -48,7 +49,7 @@ async function handleLoggedOutState() {
             ui.close();
             process.exit(0);
         default:
-            console.log('Opción no válida.');
+            console.log('Opcion no valida.');
             break;
     }
 }
@@ -64,11 +65,13 @@ async function handleLoggedInState() {
             break;
         case '3': // Logout
             const logoutResult = await authActions.handleLogout();
+            if (logoutResult.loggedOut) {
             username = logoutResult.username;
             authToken = logoutResult.authToken;
+            } 
             break;
         default:
-            console.log('Opción no válida.');
+            console.log('Opcion no valida.');
             break;
     }
 }
@@ -78,7 +81,7 @@ async function main() {
         await bus.connect();
         await mainLoop();
     } catch (error) {
-        console.error('Error fatal en la aplicación:', error);
+        console.error('Error fatal en la aplicacion:', error);
     } finally {
         bus.disconnect();
     }

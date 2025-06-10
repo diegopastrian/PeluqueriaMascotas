@@ -28,12 +28,12 @@ class BusService extends EventEmitter {
 
         this.clientSocket.on('close', () => {
             this.isConnected = false;
-            console.log('[Bus] Conexión cerrada.');
+            console.log('[Bus] Conexion cerrada.');
             this.emit('close');
         });
 
         this.clientSocket.on('error', (err) => {
-            console.error(`[Bus] Error de conexión: ${err.message}`);
+            console.error(`[Bus] Error de conexion: ${err.message}`);
             this.emit('error', err);
         });
     }
@@ -51,12 +51,12 @@ class BusService extends EventEmitter {
     send(serviceName, data) {
         return new Promise((resolve, reject) => {
             if (!this.isConnected) {
-                console.error('[Bus] No se puede enviar, no hay conexión.');
-                // Rechazamos la promesa si no hay conexión
+                console.error('[Bus] No se puede enviar, no hay conexion.');
+                // Rechazamos la promesa si no hay conexion
                 return reject(new Error('No conectado al bus'));
             }
 
-            // Escuchamos la próxima respuesta UNA SOLA VEZ
+            // Escuchamos la proxima respuesta UNA SOLA VEZ
             this.once('response', (res) => {
                 resolve(res); // Resolvemos la promesa con la respuesta parseada
             });
@@ -72,5 +72,5 @@ class BusService extends EventEmitter {
     }
 }
 
-// Exportamos una única instancia (Singleton) para toda la aplicación
+// Exportamos una unica instancia (Singleton) para toda la aplicacion
 module.exports = new BusService();

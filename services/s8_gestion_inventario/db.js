@@ -8,10 +8,10 @@ const pool = new Pool({
     port: 5432,
 });
 
-// Prueba de conexión al iniciar
+// Prueba de conexion al iniciar
 pool.connect()
     .then(client => {
-        console.log('✅ Conexión a PostgreSQL establecida correctamente');
+        console.log('✅ Conexion a PostgreSQL establecida correctamente');
         client.release();
     })
     .catch(err => {

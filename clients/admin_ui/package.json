@@ -1,7 +1,7 @@
 {
   "name": "admin-ui",
   "version": "1.0.0",
-  "description": "Interfaz de consola para administrador de autenticación de empleados",
+  "description": "Interfaz de consola para administrador de autenticacion de empleados",
   "main": "src/client.js",
   "scripts": {
     "start": "node src/client.js"

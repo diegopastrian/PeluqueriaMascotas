@@ -39,7 +39,7 @@ async function adjustStock(token, productId, quantity, motivo) {
     });
 
     clientSocket.on('error', (err) => {
-      reject(new Error(`Error en la conexión: ${err.message}`));
+      reject(new Error(`Error en la conexion: ${err.message}`));
       clientSocket.end();
     });
   });
@@ -80,7 +80,7 @@ async function addStock(token, productName,desc,precio_costo,precioventa, stock_
     });
 
     clientSocket.on('error', (err) => {
-      reject(new Error(`Error en la conexión: ${err.message}`));
+      reject(new Error(`Error en la conexion: ${err.message}`));
       clientSocket.end();
     });
   });
@@ -121,7 +121,7 @@ async function queryStock(productId) {
     });
 
     clientSocket.on('error', (err) => {
-      reject(new Error(`Error en la conexión: ${err.message}`));
+      reject(new Error(`Error en la conexion: ${err.message}`));
       clientSocket.end();
     });
   });

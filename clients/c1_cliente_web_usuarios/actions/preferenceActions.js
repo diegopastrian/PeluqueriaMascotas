@@ -27,18 +27,18 @@ async function handleListPreferences(token) {
             return false;
         }
     } catch (error) {
-        console.error('Ocurrió un error:', error);
+        console.error('Ocurrio un error:', error);
         return false;
     }
 }
 
 async function handleDeletePreference(token) {
-    // Primero, mostramos la lista para que el usuario sepa qué borrar
-    console.log('Cargando tus preferencias para que elijas cuál eliminar...');
+    // Primero, mostramos la lista para que el usuario sepa que borrar
+    console.log('Cargando tus preferencias para que elijas cual eliminar...');
     const hasPreferences = await handleListPreferences(token);
 
     if (!hasPreferences) {
-        return; // Si no hay preferencias, no hacemos nada más
+        return; // Si no hay preferencias, no hacemos nada mas
     }
 
     const data = await ui.promptForPreferenceToDelete();
@@ -47,8 +47,8 @@ async function handleDeletePreference(token) {
     const transactionData = `PREDE;${token};${id_preferencia}`;
     const response = await bus.send('CLIEN', transactionData);
 
-    if (response.includes('PREFERENCIA_ELIMINADA')) {
-        console.log(`\n✅ ¡Preferencia eliminada con éxito!\n`);
+    if (response.data.includes('PREFERENCIA_ELIMINADA')) {
+        console.log(`\n✅ ¡Preferencia eliminada con exito!\n`);
     } else {
         console.error(`\n❌ Error al eliminar la preferencia: ${response.message || response}\n`);
     }
@@ -69,7 +69,7 @@ async function handlePreferencesSubMenu(token) {
                 keepInMenu = false;
                 break;
             default:
-                console.log('Opción no válida.');
+                console.log('Opcion no valida.');
                 break;
         }
     }
