@@ -4,7 +4,7 @@ const { buildTransaction, parseResponse } = require('../../bus_service_helpers/t
 
 const BUS_HOST = 'localhost';
 const BUS_PORT = 5000;
-const SERVICE_TO_CALL = "SALDS"; // Usamos siempre el mismo código de servicio
+const SERVICE_TO_CALL = "SALDS"; // Usamos siempre el mismo codigo de servicio
 
 const clientSocketToBus = new net.Socket();
 let testStep = 'hola';
@@ -18,7 +18,7 @@ clientSocketToBus.connect(BUS_PORT, BUS_HOST, () => {
     const dataForService = `${command};ClienteDePrueba`;
     const transactionRequest = buildTransaction(SERVICE_TO_CALL, dataForService);
 
-    console.log(`[CLIENTE] 1. Enviando transacción al servicio '${SERVICE_TO_CALL}' con comando '${command}'...`);
+    console.log(`[CLIENTE] 1. Enviando transaccion al servicio '${SERVICE_TO_CALL}' con comando '${command}'...`);
     clientSocketToBus.write(transactionRequest);
 });
 
@@ -43,7 +43,7 @@ clientSocketToBus.on('data', (data) => {
                 const command = "chao";
                 const dataForService = `${command};ClienteDePrueba`;
                 const transactionRequest = buildTransaction(SERVICE_TO_CALL, dataForService);
-                console.log(`[CLIENTE] 3. Enviando transacción al servicio '${SERVICE_TO_CALL}' con comando '${command}'...`);
+                console.log(`[CLIENTE] 3. Enviando transaccion al servicio '${SERVICE_TO_CALL}' con comando '${command}'...`);
                 clientSocketToBus.write(transactionRequest);
 
             } else {
@@ -68,5 +68,5 @@ clientSocketToBus.on('data', (data) => {
     }
 });
 
-clientSocketToBus.on('close', () => console.log('[CLIENTE] Conexión con el Bus cerrada.'));
-clientSocketToBus.on('error', (err) => console.error('[CLIENTE] Error de conexión:', err.message));
+clientSocketToBus.on('close', () => console.log('[CLIENTE] Conexion con el Bus cerrada.'));
+clientSocketToBus.on('error', (err) => console.error('[CLIENTE] Error de conexion:', err.message));

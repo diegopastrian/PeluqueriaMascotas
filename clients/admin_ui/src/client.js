@@ -33,7 +33,7 @@ async function main() {
         token = '';
         employeeId = '';
         employeeName = '';
-        console.log('✅ Sesión cerrada');
+        console.log('✅ Sesion cerrada');
       } else if (action === 'adjustStock') {
         const stockData = await promptAdjustStock();
         const result = await adjustStock(token, stockData.productId, stockData.quantity, stockData.motivo);
@@ -51,12 +51,12 @@ async function main() {
       console.error(`❌ Error: ${error.message}`);
     }
 
-    // Pausa para que el usuario vea el resultado antes de volver al menú
+    // Pausa para que el usuario vea el resultado antes de volver al menu
     await new Promise(resolve => setTimeout(resolve, 2000));
   }
 }
 
 main().catch((err) => {
-  console.error(`Error en la aplicación: ${err.message}`);
+  console.error(`Error en la aplicacion: ${err.message}`);
   process.exit(1);
 });

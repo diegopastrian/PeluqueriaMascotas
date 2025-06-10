@@ -2,14 +2,14 @@
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const {pool} = require('../db'); // Asume que db.js está en el directorio raíz del servicio
+const {pool} = require('../db'); // Asume que db.js esta en el directorio raiz del servicio
 const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper'); // Ajusta esta ruta si tu estructura es diferente
 const { SERVICE_CODE, SERVICE_NAME_CODE, SECRET_KEY } = require('../config');
 
 /**
  * Maneja el registro de un nuevo cliente.
- * Operación: registrar;nombre;apellido;correo;password;telefono
- * @param {string[]} fields - Los datos de la operación, divididos por ';'.
+ * Operacion: registrar;nombre;apellido;correo;password;telefono
+ * @param {string[]} fields - Los datos de la operacion, divididos por ';'.
  * @param {net.Socket} socket - El socket para enviar la respuesta al bus.
  */
 function handleRegister(fields, socket) {
@@ -89,9 +89,9 @@ function handleRegister(fields, socket) {
 }
 
 /**
- * Maneja la autenticación de un cliente.
- * Operación: login;correo;password
- * @param {string[]} fields - Los datos de la operación, divididos por ';'.
+ * Maneja la autenticacion de un cliente.
+ * Operacion: login;correo;password
+ * @param {string[]} fields - Los datos de la operacion, divididos por ';'.
  * @param {net.Socket} socket - El socket para enviar la respuesta al bus.
  */
 function handleLogin(fields, socket) {

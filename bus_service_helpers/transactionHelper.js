@@ -21,7 +21,6 @@ function buildTransaction(serviceName, data) { //Formato de salida: NNNNNSSSSSDA
     const lengthPrefix = String(coreLength).padStart(LENGTH_PREFIX_LENGTH, '0');
 
     transaction = lengthPrefix + coreTransaction;
-    console.log(`Transacción construida: ${transaction}`);
     return transaction;
 }
 
@@ -47,7 +46,7 @@ function parseResponse(rawMessage) { // Lee Respuestas (NNNNNSSSSSOKDATOS) o Sol
     const declaredContentLength = parseInt(lengthPrefixStr, 10);
     
     if (isNaN(declaredContentLength)) {
-        throw new Error(`Prefijo de longitud NNNNN inválido: '${lengthPrefixStr}'. Mensaje completo: '${rawMessage}'`);
+        throw new Error(`Prefijo de longitud NNNNN invalido: '${lengthPrefixStr}'. Mensaje completo: '${rawMessage}'`);
     }
 
     const actualContentLength = rawMessage.length - LENGTH_PREFIX_LENGTH;
@@ -64,7 +63,7 @@ function parseResponse(rawMessage) { // Lee Respuestas (NNNNNSSSSSOKDATOS) o Sol
     let data = "";
 
     // Intentar detectar si es un formato de respuesta (con OK/NK)
-    // El contenido (después de NNNNN) debe ser suficientemente largo para SSSSS + OK/NK
+    // El contenido (despues de NNNNN) debe ser suficientemente largo para SSSSS + OK/NK
     if (actualContentLength >= SERVICE_NAME_LENGTH + STATUS_LENGTH) {
         const potentialStatus = rawMessage.substring(STATUS_OFFSET_START, STATUS_OFFSET_END);
         if (potentialStatus === "OK" || potentialStatus === "NK") { // Es una respuesta

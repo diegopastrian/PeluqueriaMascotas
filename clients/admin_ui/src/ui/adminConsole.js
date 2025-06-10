@@ -6,10 +6,10 @@ async function showMainMenu(isAuthenticated) {
       { name: 'Ajustar Stock', value: 'adjustStock' },
       { name: 'Agregar Producto al Stock', value: 'addStock' },
       { name: 'Consultar Stock', value: 'queryStock' },
-      { name: 'Cerrar Sesión', value: 'logout' }
+      { name: 'Cerrar Sesion', value: 'logout' }
     ] : [
       { name: 'Registrar Empleado', value: 'register' },
-      { name: 'Iniciar Sesión', value: 'login' }
+      { name: 'Iniciar Sesion', value: 'login' }
     ]),
     { name: 'Salir', value: 'exit' }
   ];
@@ -18,7 +18,7 @@ async function showMainMenu(isAuthenticated) {
     {
       type: 'list',
       name: 'action',
-      message: 'Bienvenido al Panel de Administración. Seleccione una opción:',
+      message: 'Bienvenido al Panel de Administracion. Seleccione una opcion:',
       choices
     }
   ]);
@@ -43,8 +43,8 @@ async function promptRegisterEmployee() {
     {
       type: 'input',
       name: 'email',
-      message: 'Correo electrónico:',
-      validate: (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input) ? true : 'Ingrese un correo válido'
+      message: 'Correo electronico:',
+      validate: (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input) ? true : 'Ingrese un correo valido'
     },
     {
       type: 'password',
@@ -56,8 +56,8 @@ async function promptRegisterEmployee() {
     {
       type: 'input',
       name: 'telefono',
-      message: 'Teléfono:',
-      validate: (input) => /^\d{9}$/.test(input) ? true : 'Ingrese un teléfono válido de 9 dígitos'
+      message: 'Telefono:',
+      validate: (input) => /^\d{9}$/.test(input) ? true : 'Ingrese un telefono valido de 9 digitos'
     },
     {
       type: 'list',
@@ -74,8 +74,8 @@ async function promptLoginEmployee() {
     {
       type: 'input',
       name: 'email',
-      message: 'Correo electrónico:',
-      validate: (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input) ? true : 'Ingrese un correo válido'
+      message: 'Correo electronico:',
+      validate: (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input) ? true : 'Ingrese un correo valido'
     },
     {
       type: 'password',
@@ -93,13 +93,13 @@ async function promptAdjustStock() {
       type: 'input',
       name: 'productId',
       message: 'ID del producto:',
-      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del producto debe ser un número'
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del producto debe ser un numero'
     },
     {
       type: 'input',
       name: 'quantity',
       message: 'Cantidad a ajustar (positiva o negativa):',
-      validate: (input) => /^-?\d+$/.test(input) ? true : 'La cantidad debe ser un número'
+      validate: (input) => /^-?\d+$/.test(input) ? true : 'La cantidad debe ser un numero'
     },
     {
       type: 'input',
@@ -128,19 +128,19 @@ async function promptAddStock() {
       type: 'input',
       name: 'precio_costo',
       message: 'Precio costo por unidad:',
-      validate: (input) => /^\d+$/.test(input) && parseInt(input) > 0 ? true : 'La cantidad debe ser un número positivo'
+      validate: (input) => /^\d+$/.test(input) && parseInt(input) > 0 ? true : 'La cantidad debe ser un numero positivo'
     },
     {
       type: 'input',
       name: 'precioventa',
       message: 'Precio venta por unidad:',
-      validate: (input) => /^\d+$/.test(input) && parseInt(input) > 0 ? true : 'La cantidad debe ser un número positivo'
+      validate: (input) => /^\d+$/.test(input) && parseInt(input) > 0 ? true : 'La cantidad debe ser un numero positivo'
     },
     {
       type: 'input',
       name: 'stock_inicial',
       message: 'Stock inical:',
-      validate: (input) => /^\d+$/.test(input) && parseInt(input) > 0 ? true : 'La cantidad debe ser un número positivo'
+      validate: (input) => /^\d+$/.test(input) && parseInt(input) > 0 ? true : 'La cantidad debe ser un numero positivo'
     }
   ]);
 }
@@ -151,7 +151,7 @@ async function promptQueryStock() {
       type: 'input',
       name: 'productId',
       message: 'ID del producto a consultar:',
-      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del producto debe ser un número'
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del producto debe ser un numero'
     }
   ]);
 }

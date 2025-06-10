@@ -6,7 +6,7 @@ const BUS_PORT = 5000;
 
 const clientSocket = new net.Socket();
 
-let authToken = ''; // Para almacenar el token JWT después de un login exitoso
+let authToken = ''; // Para almacenar el token JWT despues de un login exitoso
 
 clientSocket.connect(BUS_PORT, BUS_HOST, () => {
     console.log('Cliente conectado al Bus');
@@ -34,7 +34,7 @@ clientSocket.connect(BUS_PORT, BUS_HOST, () => {
 clientSocket.on('data', (data) => {
     const rawData = data.toString();
     console.log(`\n[Cliente] Datos crudos recibidos: ${rawData}`);
-    // Regex para encontrar patrones de transacción: NNNNNSSSSS[OK|NK]?DATOS
+    // Regex para encontrar patrones de transaccion: NNNNNSSSSS[OK|NK]?DATOS
     const messages = rawData.match(/\d{5}[A-Z]{5}(?:OK|NK)?.*?(?=\d{5}[A-Z]{5}|$)/g) || [rawData];
 
     for (const response of messages) {
@@ -44,15 +44,15 @@ clientSocket.on('data', (data) => {
             const parsed = parseResponse(response);
             console.log('Respuesta parseada:', parsed);
 
-            // Manejo de la respuesta de REGISTRO (ya no debería ocurrir si está comentado)
+            // Manejo de la respuesta de REGISTRO (ya no deberia ocurrir si esta comentado)
             if (parsed.serviceName === 'CLIEN' && parsed.data.startsWith('registrar;')) {
                 if (parsed.status === 'OK') {
                     console.log("--> REGISTRO EXITOSO! Usuario creado en la DB.");
-                    console.log("    AHORA: Comenta la sección de REGISTRO y descomenta la sección de LOGIN en este script.");
-                    console.log("    Asegúrate de que los datos de LOGIN coincidan con el usuario recién creado.");
+                    console.log("    AHORA: Comenta la seccion de REGISTRO y descomenta la seccion de LOGIN en este script.");
+                    console.log("    Asegurate de que los datos de LOGIN coincidan con el usuario recien creado.");
                 } else {
                     console.error("--> FALLO EL REGISTRO:", parsed.data);
-                    console.error("    Si el correo ya existe, cambia el correo en el script e inténtalo de nuevo.");
+                    console.error("    Si el correo ya existe, cambia el correo en el script e intentalo de nuevo.");
                 }
                 clientSocket.destroy(); 
                 return; 
@@ -108,7 +108,7 @@ clientSocket.on('data', (data) => {
                     console.error("--> FALLO EL LOGIN:", parsed.data);
                 }
             } else if (parsed.status === 'NK') {
-                console.log(`Operación fallida: ${parsed.serviceName} - ${parsed.data}`);
+                console.log(`Operacion fallida: ${parsed.serviceName} - ${parsed.data}`);
             }
         } catch (error) {
             console.error('Error parseando respuesta:', error.message);
@@ -117,9 +117,9 @@ clientSocket.on('data', (data) => {
 });
 
 clientSocket.on('close', () => {
-    console.log('Conexión con el Bus cerrada');
+    console.log('Conexion con el Bus cerrada');
 });
 
 clientSocket.on('error', (err) => {
-    console.error('Error de conexión con el Bus:', err.message);
+    console.error('Error de conexion con el Bus:', err.message);
 });

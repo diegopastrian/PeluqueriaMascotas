@@ -37,7 +37,7 @@ async function registerEmployee({ nombre, apellido, email, password, telefono, r
     });
 
     clientSocket.on('error', (err) => {
-      reject(new Error(`Error en la conexión: ${err.message}`));
+      reject(new Error(`Error en la conexion: ${err.message}`));
       clientSocket.end();
     });
   });
@@ -78,7 +78,7 @@ async function loginEmployee({ email, password }) {
     });
 
     clientSocket.on('error', (err) => {
-      reject(new Error(`Error en la conexión: ${err.message}`));
+      reject(new Error(`Error en la conexion: ${err.message}`));
       clientSocket.end();
     });
   });
