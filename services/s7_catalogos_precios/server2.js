@@ -24,9 +24,6 @@ serviceSocketToBus.connect(config.BUS_PORT, config.BUS_HOST, () => {
     });
 });
 
-console.log("[DEBUG] ¿Pool está definido?", pool);
-
-
 serviceSocketToBus.on('data', async (data) => {
     const rawData = data.toString();
     const messages = rawData.match(/\d{5}[A-Z]{5}(?:OK|NK)?.*?(?=\d{5}[A-Z]{5}|$)/g) || [rawData];
@@ -64,21 +61,6 @@ serviceSocketToBus.on('data', async (data) => {
                         const productos = await listProducts(pool);
                         const productosStr = productos.map(p => `${p.id_producto},${p.nombre},${p.descripcion},${p.precio},${p.stock},${p.imagen_url}`).join('|');
                         const response = buildTransaction('CATPS', `listar;${productosStr}`);
-
-                        // --- DEBUG de longitud y caracteres ---
-                        console.log("=== Depuración CATLP ===");
-                        console.log(`Longitud declarada (prefijo NNNNN): '${response.substring(0, 5)}'`);
-                        console.log(`Longitud real contenido (sin prefijo): ${response.length - 5}`);
-                        console.log(`Primeros 50 caracteres del contenido: '${response.substring(5, 55)}'`);
-                        console.log(`Últimos 50 caracteres del contenido: '${response.substring(response.length - 50)}'`);
-                        for (let i = 0; i < response.length; i++) {
-                            const code = response.charCodeAt(i);
-                            if (code === 10 || code === 13) {
-                                console.log(`Carácter de salto de línea encontrado en posición ${i}`);
-                            }
-                        }
-                        // --- FIN DEBUG ---
-
                         serviceSocketToBus.write(response);
                     } catch (error) {
                         const errorResponse = buildTransaction('CATPS', `listar;Error al obtener productos`);
