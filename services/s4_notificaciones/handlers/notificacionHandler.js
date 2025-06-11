@@ -1,5 +1,5 @@
 // handlers/notificacionHandler.js
-const pool = require('../db');
+const pool = require('../../../bus_service_helpers/db.js');
 
 async function handleSendNotificacion(fields) {
     // Payload esperado: enviar;id_cliente_destino;tipo;canal(EMAIL|SMS);asunto;mensaje

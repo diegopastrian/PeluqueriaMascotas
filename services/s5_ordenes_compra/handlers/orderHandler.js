@@ -1,5 +1,5 @@
 // handlers/orderHandler.js
-const pool = require('../db');
+const pool = require('../../../bus_service_helpers/db.js');
 const { verifyToken } = require('../helpers/jwtHelper');
 
 // Operación: ORCR (Crear Orden)
