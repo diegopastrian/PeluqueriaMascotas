@@ -47,8 +47,7 @@ clientSocketToBus.on('data', (data) => {
             case 'CATPS':
                 console.log("[TEST] Verificando precio de servicio...");
                 if (parsed.serviceName === SERVICE_TO_CALL && command === 'CATPS') {
-                    precio = payload
-                    console.log("precio:", precio)
+                    const precio = payload;
                     if (!isNaN(parseFloat(precio))) {
                         console.log("   ✔ Precio de servicio recibido correctamente.");
                         testStep = 'CATPP';
@@ -64,15 +63,47 @@ clientSocketToBus.on('data', (data) => {
             case 'CATPP':
                 console.log("[TEST] Verificando precio de producto...");
                 if (parsed.serviceName === SERVICE_TO_CALL && command === 'CATPP') {
-                    const [, precio] = payload.split(';');
-                    if (!isNaN(parseFloat(payload))) {
+                    const precio = payload;
+                    if (!isNaN(parseFloat(precio))) {
                         console.log("   ✔ Precio de producto recibido correctamente.");
-                        console.log("\n*** TODAS LAS PRUEBAS PASARON EXITOSAMENTE ***");
+                        testStep = 'CATOP';
+                        sendNextTest();
                     } else {
                         failTest("CATPP (precio no numérico)");
                     }
                 } else {
                     failTest("CATPP");
+                }
+                break;
+
+            case 'CATOP':
+                console.log("[TEST] Verificando datos completos del producto...");
+                if (parsed.serviceName === SERVICE_TO_CALL && command === 'CATOP') {
+                    const campos = payload.split(',');
+                    if (campos.length >= 6) {
+                        console.log("   ✔ Datos completos de producto recibidos correctamente.");
+                        testStep = 'CATOS';
+                        sendNextTest();
+                    } else {
+                        failTest("CATOP (datos incompletos)");
+                    }
+                } else {
+                    failTest("CATOP");
+                }
+                break;
+
+            case 'CATOS':
+                console.log("[TEST] Verificando datos completos del servicio...");
+                if (parsed.serviceName === SERVICE_TO_CALL && command === 'CATOS') {
+                    const campos = payload.split(',');
+                    if (campos.length >= 6) {
+                        console.log("   ✔ Datos completos de servicio recibidos correctamente.");
+                        console.log("\n*** TODAS LAS PRUEBAS PASARON EXITOSAMENTE ***");
+                    } else {
+                        failTest("CATOS (datos incompletos)");
+                    }
+                } else {
+                    failTest("CATOS");
                 }
                 clientSocketToBus.destroy();
                 break;
@@ -102,11 +133,19 @@ function sendNextTest() {
             break;
         case 'CATPS':
             command = 'CATPS';
-            data = `${command};1`; // ID de ejemplo
+            data = `${command};1`; // ID de servicio de ejemplo
             break;
         case 'CATPP':
             command = 'CATPP';
-            data = `${command};1`; // ID de ejemplo
+            data = `${command};1`; // ID de producto de ejemplo
+            break;
+        case 'CATOP':
+            command = 'CATOP';
+            data = `${command};1`; // ID de producto
+            break;
+        case 'CATOS':
+            command = 'CATOS';
+            data = `${command};1`; // ID de servicio
             break;
     }
 

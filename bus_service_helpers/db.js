@@ -1,5 +1,6 @@
 const { Pool } = require('pg')
 const path = require('path');
+// Cargamos las variables de entorno globales del proyecto (base de datos)
 require('dotenv').config({ path: path.resolve(__dirname, './../.env.global') });
 
 const pool = new Pool({

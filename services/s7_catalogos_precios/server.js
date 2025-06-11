@@ -4,8 +4,10 @@ const pool  = require('./../../bus_service_helpers/db');
 const config = require('./config'); // Variables de entorno
 const sendSinit = require('../../bus_service_helpers/initHelper'); // Activación del bus
 const { buildTransaction, parseResponse } = require('../../bus_service_helpers/transactionHelper');
-const {listProducts, getProductById} = require('./handlers/productsHandlers');
-const {listServices, getServiceById} = require('./handlers/servicesHandlers');
+
+// Cargamos los handlers para manejar las diferentes funciones que sean requeridas
+const productHandler = require('./handlers/productHandler');
+const serviceHandler = require('./handlers/serviceHandler');
 
 const app = express();
 const serviceSocketToBus = new net.Socket();
@@ -58,7 +60,7 @@ serviceSocketToBus.on('data', async (data) => {
             switch (operation) {
                 case 'CATLP': // listar Productos
                     try {
-                        const productos = await listProducts(pool);
+                        const productos = await productHandler.listProducts(pool);
                         const productosStr = productos.map(p => `${p.id_producto},${p.nombre},${p.descripcion},${p.precio},${p.stock},${p.imagen_url}`).join('|');
                         const response = buildTransaction('CATPS', `listar;${productosStr}`);
                         serviceSocketToBus.write(response);
@@ -70,7 +72,7 @@ serviceSocketToBus.on('data', async (data) => {
 
                 case 'CATLS': // Listar Servicios
                     try {
-                        const servicios = await listServices(pool);
+                        const servicios = await serviceHandler.listServices(pool);
                         const servicesStr = servicios.map(p => `${p.id_servicio},${p.nombre},${p.descripcion},${p.precio},${p.tiempo_estimado}`).join('|');
                         const response = buildTransaction('CATPS', `listar;${servicesStr}`);
                         serviceSocketToBus.write(response);
@@ -94,7 +96,7 @@ serviceSocketToBus.on('data', async (data) => {
                     }
 
                     try {
-                        const servicio = await getServiceById(idServicio, pool);
+                        const servicio = await serviceHandler.getServiceById(idServicio, pool);
 
                         if (!servicio) {
                             const errorResponse = buildTransaction('CATPS', `CATPS;Servicio no encontrado`);
@@ -125,7 +127,7 @@ serviceSocketToBus.on('data', async (data) => {
                     }
 
                     try {
-                        const producto = await getProductById(idProducto, pool);
+                        const producto = await productHandler.getProductById(idProducto, pool);
 
                         if (!producto) {
                             const errorResponse = buildTransaction('CATPS', `CATPP;Producto no encontrado`);
@@ -140,6 +142,71 @@ serviceSocketToBus.on('data', async (data) => {
                         serviceSocketToBus.write(errorResponse);
                     }
                     break;
+
+                case 'CATOP': // Obtener todos los datos de un producto
+                    if (fields.length !== 2) {
+                        const errorResponse = buildTransaction('CATPS', `CATOP;Formato inválido: CATOP;id_producto`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    const idProductoCompleto = parseInt(fields[1]);
+                    if (isNaN(idProductoCompleto)) {
+                        const errorResponse = buildTransaction('CATPS', `CATOP;ID de producto inválido`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    try {
+                        const producto = await productHandler.getProductById(idProductoCompleto, pool);
+
+                        if (!producto) {
+                            const errorResponse = buildTransaction('CATPS', `CATOP;Producto no encontrado`);
+                            serviceSocketToBus.write(errorResponse);
+                            break;
+                        }
+
+                        const productoStr = `${producto.id_producto},${producto.nombre},${producto.descripcion},${producto.precio},${producto.stock},${producto.imagen_url}`;
+                        const response = buildTransaction('CATPS', `CATOP;${productoStr}`);
+                        serviceSocketToBus.write(response);
+                    } catch (error) {
+                        const errorResponse = buildTransaction('CATPS', `CATOP;Error al obtener producto`);
+                        serviceSocketToBus.write(errorResponse);
+                    }
+                    break;
+
+                case 'CATOS': // Obtener todos los datos de un servicio
+                    if (fields.length !== 2) {
+                        const errorResponse = buildTransaction('CATPS', `CATOS;Formato inválido: CATOS;id_servicio`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    const idServicioCompleto = parseInt(fields[1]);
+                    if (isNaN(idServicioCompleto)) {
+                        const errorResponse = buildTransaction('CATPS', `CATOS;ID de servicio inválido`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    try {
+                        const servicio = await serviceHandler.getServiceById(idServicioCompleto, pool);
+
+                        if (!servicio) {
+                            const errorResponse = buildTransaction('CATPS', `CATOS;Servicio no encontrado`);
+                            serviceSocketToBus.write(errorResponse);
+                            break;
+                        }
+
+                        const servicioStr = `${servicio.id_servicio},${servicio.nombre},${servicio.descripcion},${servicio.precio},${servicio.tiempo_estimado}`;
+                        const response = buildTransaction('CATPS', `CATOS;${servicioStr}`);
+                        serviceSocketToBus.write(response);
+                    } catch (error) {
+                        const errorResponse = buildTransaction('CATPS', `CATOS;Error al obtener servicio`);
+                        serviceSocketToBus.write(errorResponse);
+                    }
+                    break;
+
             }
 
         } catch (error) {
