@@ -90,11 +90,18 @@ npm install
 _Repite este proceso para cada componente que desees ejecutar._
 
 ### 5\. Ejecución del Sistema
-
-1.  \# Terminal 1cd services/s2\_gestion\_clientesnode server.js# Deberías ver: Servicio de Gestión de Clientes (S2) escuchando en el puerto 5556
+1. \# Levantar el bus con el Docker
+2.  \# Terminal de servicio
+   ```
+    cd services/nombre_Servicio
+    node server.js
+   ```
     
-2.  \# Terminal de Clientecd clients/c1\_cliente\_web\_usuariosnode app.js
-    
+3.  \# Terminal de Cliente
+```
+cd clients/nombre_cliente
+node app.js
+```   
 
 Componentes del Sistema
 -----------------------
