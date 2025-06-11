@@ -1,6 +1,6 @@
 // s2_gestion_clientes/handlers/preferenceHandler.js
 
-const {pool} = require('../db');
+const pool = require('../../../bus_service_helpers/db.js');
 const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper'); // Ajusta la ruta
 const { verifyToken } = require('../helpers/jwtHelper');
 const { SERVICE_CODE,  SERVICE_NAME_CODE } = require('../config');

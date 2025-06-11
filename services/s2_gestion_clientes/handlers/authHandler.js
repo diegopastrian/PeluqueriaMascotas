@@ -2,7 +2,7 @@
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const { pool } = require('../db');
+const pool = require('../../../bus_service_helpers/db.js');
 const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper');
 const { SERVICE_CODE, SERVICE_NAME_CODE, SECRET_KEY } = require('../config');
 

@@ -1,6 +1,6 @@
 // services/s2_gestion_clientes/handlers/petHandler.js
 
-const { pool } = require('../db');
+const pool = require('../../../bus_service_helpers/db.js');
 const jwtHelper = require('../helpers/jwtHelper');
 const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper');
 
