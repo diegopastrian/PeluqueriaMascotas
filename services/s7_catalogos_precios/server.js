@@ -207,7 +207,202 @@ serviceSocketToBus.on('data', async (data) => {
                     }
                     break;
 
+                case 'CATAP': // Agregar producto
+                    if (fields.length !== 7) {
+                        const errorMsg = 'CATAP;Formato inválido: CATAP;token;nombre;descripcion;precio;stock;imagen_url';
+                        // Construir manualmente el mensaje con NK y longitud correcta
+                        const len = (5 + 2 + errorMsg.length).toString().padStart(5, '0'); // 5 servicio + 2 status + longitud data
+                        const errorResponse = len + 'CATPS' + 'NK' + errorMsg;
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
 
+                    const [, tokenCATAP, nombreCATAP, descripcionCATAP, precioStrCATAP, stockStrCATAP, imagen_urlCATAP] = fields;
+                    const precioCATAP = parseFloat(precioStrCATAP);
+                    const stockCATAP = parseInt(stockStrCATAP);
+
+                    if (!nombreCATAP || !descripcionCATAP || isNaN(precioCATAP) || isNaN(stockCATAP) || stockCATAP < 0) {
+                        const errorMsg = 'CATAP;Datos inválidos';
+                        const len = (5 + 2 + errorMsg.length).toString().padStart(5, '0');
+                        const errorResponse = len + 'CATPS' + 'NK' + errorMsg;
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    const authResultCATAP = require('./helpers/jwtHelper').verifyToken(tokenCATAP);
+                    if (!authResultCATAP.success) {
+                        const errorMsg = `CATAP;${authResultCATAP.message}`;
+                        const len = (5 + 2 + errorMsg.length).toString().padStart(5, '0');
+                        const errorResponse = len + 'CATPS' + 'NK' + errorMsg;
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    if (!['veterinario', 'empleado', 'administrador'].includes(authResultCATAP.role)) {
+                        const errorResponse = buildTransaction('CATPS', `CATAP;Permisos insuficientes`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    try {
+                        const result = await productHandler.addProduct(nombreCATAP, descripcionCATAP, precioCATAP, stockCATAP, imagen_urlCATAP, pool);
+                        const response = buildTransaction('CATPS', `CATAP;Producto agregado con ID ${result.id_producto}`);
+                        serviceSocketToBus.write(response);
+                    } catch (error) {
+                        const errorMsg = 'CATAP;Error al agregar producto';
+                        const len = (5 + 2 + errorMsg.length).toString().padStart(5, '0');
+                        const errorResponse = len + 'CATPS' + 'NK' + errorMsg;
+                        serviceSocketToBus.write(errorResponse);
+                    }
+                    break;
+
+                case 'CATUP': // Modificar producto
+                    if (fields.length !== 8) {
+                        const errorResponse = buildTransaction('CATPS', `CATUP;Formato inválido: CATUP;token;id_producto;nombre;descripcion;precio;stock;imagen_url`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    // Declarar todas las variables con nombres únicos
+                    const [, tokenCATUP, idProductoStrCATUP, nombreCATUP, descripcionCATUP, precioStrCATUP, stockStrCATUP, imagen_urlCATUP] = fields;
+
+                    const id_productoCATUP = parseInt(idProductoStrCATUP);
+                    const precioCATUP = parseFloat(precioStrCATUP);
+                    const stockCATUP = parseInt(stockStrCATUP);
+
+                    if (isNaN(id_productoCATUP) || !nombreCATUP || !descripcionCATUP || isNaN(precioCATUP) || isNaN(stockCATUP) || stockCATUP < 0) {
+                        const errorResponse = buildTransaction('CATPS', `CATUP;Datos inválidos`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    const authResultCATUP = require('./helpers/jwtHelper').verifyToken(tokenCATUP);
+                    if (!authResultCATUP.success) {
+                        const errorResponse = buildTransaction('CATPS', `CATUP;${authResultCATUP.message}`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    if (!['veterinario', 'empleado', 'administrador'].includes(authResultCATUP.role)) {
+                        const errorResponse = buildTransaction('CATPS', `CATUP;Permisos insuficientes`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    try {
+                        const result = await productHandler.updateProduct(id_productoCATUP, nombreCATUP, descripcionCATUP, precioCATUP, stockCATUP, imagen_urlCATUP, pool);
+                        if (result.rowCount === 0) {
+                            const errorResponse = buildTransaction('CATPS', `CATUP;Producto no encontrado`);
+                            serviceSocketToBus.write(errorResponse);
+                            break;
+                        }
+                        const response = buildTransaction('CATPS', `CATUP;Producto modificado con ID ${id_productoCATUP}`);
+                        serviceSocketToBus.write(response);
+                    } catch (error) {
+                        const errorResponse = buildTransaction('CATPS', `CATUP;Error al modificar producto`);
+                        serviceSocketToBus.write(errorResponse);
+                    }
+                    break;
+
+                case 'CATAS': // Agregar servicio
+                    if (fields.length !== 6) {
+                        const errorMsg = 'CATAS;Formato inválido: CATAS;token;nombre;descripcion;precio;tiempo_estimado_minutos';
+                        const len = (5 + 2 + errorMsg.length).toString().padStart(5, '0');
+                        const errorResponse = len + 'CATPS' + 'NK' + errorMsg;
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    const [, tokenCATAS, nombreCATAS, descripcionCATAS, precioStrCATAS, tiempoStrCATAS] = fields;
+                    const precioCATAS = parseFloat(precioStrCATAS);
+                    const tiempoCATAS = parseInt(tiempoStrCATAS);
+
+                    if (!nombreCATAS || !descripcionCATAS || isNaN(precioCATAS) || isNaN(tiempoCATAS) || tiempoCATAS <= 0) {
+                        const errorMsg = 'CATAS;Datos inválidos';
+                        const len = (5 + 2 + errorMsg.length).toString().padStart(5, '0');
+                        const errorResponse = len + 'CATPS' + 'NK' + errorMsg;
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    const authResultCATAS = require('./helpers/jwtHelper').verifyToken(tokenCATAS);
+                    if (!authResultCATAS.success) {
+                        const errorMsg = `CATAS;${authResultCATAS.message}`;
+                        const len = (5 + 2 + errorMsg.length).toString().padStart(5, '0');
+                        const errorResponse = len + 'CATPS' + 'NK' + errorMsg;
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    if (!['veterinario', 'empleado', 'administrador'].includes(authResultCATAS.role)) {
+                        const errorResponse = buildTransaction('CATPS', `CATAS;Permisos insuficientes`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    try {
+                        const result = await serviceHandler.addService(nombreCATAS, descripcionCATAS, precioCATAS, tiempoCATAS, pool);
+                        const response = buildTransaction('CATPS', `CATAS;Servicio agregado con ID ${result.id_servicio}`);
+                        serviceSocketToBus.write(response);
+                    } catch (error) {
+                        const errorMsg = 'CATAS;Error al agregar servicio';
+                        const len = (5 + 2 + errorMsg.length).toString().padStart(5, '0');
+                        const errorResponse = len + 'CATPS' + 'NK' + errorMsg;
+                        serviceSocketToBus.write(errorResponse);
+                    }
+                    break;
+
+                case 'CATUS': // Modificar servicio
+                    if (fields.length !== 7) {
+                        const errorResponse = buildTransaction('CATPS', `CATUS;Formato inválido: CATUS;token;id_servicio;nombre;descripcion;precio;tiempo_estimado_minutos`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    const [, tokenCATUS, idServicioStrCATUS, nombreCATUS, descripcionCATUS, precioStrCATUS, tiempoStrCATUS] = fields;
+
+                    const id_servicioCATUS = parseInt(idServicioStrCATUS);
+                    const precioCATUS = parseFloat(precioStrCATUS);
+                    const tiempoCATUS = parseInt(tiempoStrCATUS);
+
+                    if (isNaN(id_servicioCATUS) || !nombreCATUS || !descripcionCATUS || isNaN(precioCATUS) || isNaN(tiempoCATUS) || tiempoCATUS <= 0) {
+                        const errorResponse = buildTransaction('CATPS', `CATUS;Datos inválidos`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    const authResultCATUS = require('./helpers/jwtHelper').verifyToken(tokenCATUS);
+                    if (!authResultCATUS.success) {
+                        const errorResponse = buildTransaction('CATPS', `CATUS;${authResultCATUS.message}`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    if (!['veterinario', 'empleado', 'administrador'].includes(authResultCATUS.role)) {
+                        const errorResponse = buildTransaction('CATPS', `CATUS;Permisos insuficientes`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+
+                    try {
+                        const result = await serviceHandler.updateService(id_servicioCATUS, nombreCATUS, descripcionCATUS, precioCATUS, tiempoCATUS, pool);
+                        if (result.rowCount === 0) {
+                            const errorResponse = buildTransaction('CATPS', `CATUS;Servicio no encontrado`);
+                            serviceSocketToBus.write(errorResponse);
+                            break;
+                        }
+                        const response = buildTransaction('CATPS', `CATUS;Servicio modificado con ID ${id_servicioCATUS}`);
+                        serviceSocketToBus.write(response);
+                    } catch (error) {
+                        const errorResponse = buildTransaction('CATPS', `CATUS;Error al modificar servicio`);
+                        serviceSocketToBus.write(errorResponse);
+                    }
+                    break;
+
+                default:
+                    const errorResponse = buildTransaction(config.SERVICE_CODE, `error;Operación no soportada: ${operation}`);
+                    serviceSocketToBus.write(errorResponse);
+                    break;
             }
 
         } catch (error) {
