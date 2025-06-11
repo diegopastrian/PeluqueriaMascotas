@@ -15,7 +15,6 @@ class BusService extends EventEmitter {
 
         this.clientSocket.on('data', (data) => {
             const rawData = data.toString();
-            console.log(`\n[Bus] << Recibido: ${rawData.trim()}`);
             
             // Un simple parseo, emitimos el objeto parseado
             try {
@@ -40,7 +39,6 @@ class BusService extends EventEmitter {
 
     connect() {
         if (this.isConnected) return;
-        console.log('[Bus] Conectando al Bus de Servicios...');
         this.clientSocket.connect(BUS_PORT, BUS_HOST, () => {
             this.isConnected = true;
             console.log('[Bus] Conectado exitosamente.');

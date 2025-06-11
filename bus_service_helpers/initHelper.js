@@ -8,7 +8,6 @@ const { buildTransaction, parseResponse } = require('./transactionHelper');
  */
 function sendSinit(serviceSocketToBus, config, callback) {
     const sinitTransaction = buildTransaction('sinit', config.SERVICE_CODE);
-    console.log(`[${config.SERVICE_NAME_CODE}] Enviando SINIT: ${sinitTransaction}`);
     serviceSocketToBus.write(sinitTransaction);
 
     // Escucha la respuesta del bus solo para SINIT, una sola vez.
@@ -17,7 +16,6 @@ function sendSinit(serviceSocketToBus, config, callback) {
         try {
             const parsed = parseResponse(responseStr);
             if (parsed.serviceName === 'sinit' && parsed.status === 'OK') {
-                console.log(`[${config.SERVICE_NAME_CODE}] Servicio ${config.SERVICE_CODE} activado correctamente.`);
                 callback(null);
             } else {
                 callback(new Error(`Fallo en SINIT: ${responseStr}`));

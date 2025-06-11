@@ -81,4 +81,4 @@ serviceSocketToBus.on('error', (err) => console.error(`${logPrefix} Error de con
 const express = require('express');
 const healthApp = express();
 healthApp.get('/health', (req, res) => res.status(200).send(`${SERVICE_CODE} service is active.`));
-healthApp.listen(MY_SERVICE_LISTEN_PORT, () => console.log(`${logPrefix} Endpoint de health check en http://localhost:${MY_SERVICE_LISTEN_PORT}/health`));
+healthApp.listen(MY_SERVICE_LISTEN_PORT, () => {});

@@ -5,6 +5,7 @@ const ui = require('./ui/consoleUI');
 const authActions = require('./actions/AuthActions');
 const preferenceActions = require('./actions/preferenceActions');
 const petActions = require('./actions/petActions');
+const catalogActions = require('./actions/catalogActions');
 let authToken = null;
 let username = '';
 
@@ -63,15 +64,18 @@ async function handleLoggedInState() {
         case '2': // Gestionar Mascotas
             await petActions.handlePetManagement(authToken);
             break;
-        case '3': // Logout
+        case '3': // Ver Catálogo
+            await catalogActions.handleCatalogSubMenu(authToken); // <-- AÑADIR
+            break;
+        case '4': // Logout
             const logoutResult = await authActions.handleLogout();
             if (logoutResult.loggedOut) {
-            username = logoutResult.username;
-            authToken = logoutResult.authToken;
-            } 
+                username = logoutResult.username;
+                authToken = logoutResult.authToken;
+            }
             break;
         default:
-            console.log('Opcion no valida.');
+            console.log('Opción no válida.');
             break;
     }
 }

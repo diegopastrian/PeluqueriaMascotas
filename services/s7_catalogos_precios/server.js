@@ -14,7 +14,6 @@ const serviceSocketToBus = new net.Socket();
 
 // Conexión al Bus
 serviceSocketToBus.connect(config.BUS_PORT, config.BUS_HOST, () => {
-    console.log(`[${config.SERVICE_NAME_CODE}] Conectado al Bus en ${config.BUS_HOST}:${config.BUS_PORT}`);
     sendSinit(serviceSocketToBus, config, (err) => {
         if (err) {
             console.error(`[${config.SERVICE_NAME_CODE}] Error durante la activación: ${err.message}`);
@@ -32,8 +31,6 @@ serviceSocketToBus.on('data', async (data) => {
 
     for (const message of messages) {
         if (message.length < 10) continue;
-
-        console.log(`[${config.SERVICE_NAME_CODE}] Recibido: ${message}`);
 
         try {
             const parsed = parseResponse(message);
@@ -63,6 +60,7 @@ serviceSocketToBus.on('data', async (data) => {
                         const productos = await productHandler.listProducts(pool);
                         const productosStr = productos.map(p => `${p.id_producto},${p.nombre},${p.descripcion},${p.precio},${p.stock},${p.imagen_url}`).join('|');
                         const response = buildTransaction('CATPS', `listar;${productosStr}`);
+                        console.log(`[${config.SERVICE_NAME_CODE}] Enviando lista de productos: Se enviaron ${productos.length} productos`);
                         serviceSocketToBus.write(response);
                     } catch (error) {
                         const errorResponse = buildTransaction('CATPS', `listar;Error al obtener productos`);
@@ -75,6 +73,7 @@ serviceSocketToBus.on('data', async (data) => {
                         const servicios = await serviceHandler.listServices(pool);
                         const servicesStr = servicios.map(p => `${p.id_servicio},${p.nombre},${p.descripcion},${p.precio},${p.tiempo_estimado}`).join('|');
                         const response = buildTransaction('CATPS', `listar;${servicesStr}`);
+                        console.log(`[${config.SERVICE_NAME_CODE}] Enviando lista de servicios: Se enviaron ${servicios.length} servicios`);
                         serviceSocketToBus.write(response);
                     } catch (error) {
                         const errorResponse = buildTransaction('CATPS', `listar;Error al obtener productos`);
@@ -106,6 +105,7 @@ serviceSocketToBus.on('data', async (data) => {
 
                         const precio = Number(servicio.precio);
                         const response = buildTransaction('CATPS', `CATPS;${precio}`);
+                        console.log(`[${config.SERVICE_NAME_CODE}] Enviando precio del servicio: ${servicio.id_servicio} - ${precio}`);
                         serviceSocketToBus.write(response);
                     } catch (error) {
                         const errorResponse = buildTransaction('CATPS', `CATPS;Error al obtener precio`);
@@ -134,7 +134,7 @@ serviceSocketToBus.on('data', async (data) => {
                             serviceSocketToBus.write(errorResponse);
                             break;
                         }
-
+                        console.log(`[${config.SERVICE_NAME_CODE}] Enviando precio del producto: ${producto.id_producto} - ${producto.precio}`);
                         const response = buildTransaction('CATPS', `CATPP;${producto.precio}`);
                         serviceSocketToBus.write(response);
                     } catch (error) {
@@ -427,14 +427,12 @@ healthApp.get('/health', (req, res) => {
     res.status(200).send(`${config.SERVICE_NAME_CODE} service is active and connected to bus`);
 });
 healthApp.listen(HEALTH_PORT, () => {
-    console.log(`[${config.SERVICE_NAME_CODE}] Health check en http://localhost:${HEALTH_PORT}/health`);
 });
 
 // --- REST API opcional para depuración ---
 app.use(express.json());
 
 app.listen(config.API_PORT || 3004, () => {
-    console.log(`[${config.SERVICE_NAME_CODE}] API REST escuchando en puerto ${config.API_PORT || 3004}`);
+    
 });
 
-console.log(`[${config.SERVICE_NAME_CODE}] Iniciando servicio...`);

@@ -133,7 +133,6 @@ healthApp.get('/health', (req, res) => {
     res.status(200).send(`${SERVICE_NAME_CODE} service is active and connected to bus`);
 });
 healthApp.listen(HEALTH_PORT, () => {
-    console.log(`[${SERVICE_NAME_CODE}] Health check en http://localhost:${HEALTH_PORT}/health`);
 });
 
 // API HTTP (opcional si quieres exponer algo más en el futuro)

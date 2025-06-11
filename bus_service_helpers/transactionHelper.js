@@ -4,9 +4,15 @@ const SERVICE_NAME_LENGTH = 5;  // Longitud de SSSSS
 const STATUS_LENGTH = 2;        // Longitud de OK/NK
 const MAX_LENGTH = parseInt('9'.repeat(LENGTH_PREFIX_LENGTH), 10);
 
-
+function normalizeData(text) {
+    if (typeof text !== 'string') {
+        return text;
+    }
+    return text.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+}
 
 function buildTransaction(serviceName, data) { //Formato de salida: NNNNNSSSSSDATOS
+    data = normalizeData(data); 
     if (typeof serviceName !== 'string' || serviceName.length !== SERVICE_NAME_LENGTH) {
         throw new Error(`El nombre del servicio debe ser una cadena de exactamente ${SERVICE_NAME_LENGTH} caracteres. Recibido: '${serviceName}'`);
     }

@@ -11,12 +11,12 @@ const rl = readline.createInterface({
 // Funcion auxiliar para hacer preguntas
 const ask = (question) => new Promise(resolve => rl.question(question, resolve));
 
-// --- MENuS ---
+// --- MENUS ---
 async function showMainMenu() {
     console.log('\n--- Bienvenido a la Peluquería de Mascotas ---');
     const { choice } = await inquirer.prompt([
         {
-            type: 'list', // Usamos 'list' para que funcione con las flechas
+            type: 'list', 
             name: 'choice',
             message: '¿Qué deseas hacer?',
             choices: [
@@ -30,22 +30,23 @@ async function showMainMenu() {
     return choice;
 }
 
-async function showUserMenu(username) { //logeado
+async function showUserMenu(username) {
     const { choice } = await inquirer.prompt([
         {
             type: 'list',
             name: 'choice',
-            message: `Bienvenido, ${username}! ¿Que deseas hacer?`,
+            message: `Bienvenido, ${username}! ¿Qué deseas hacer?`,
             choices: [
                 { name: '1. Ajustar Preferencias', value: '1' },
                 { name: '2. Gestionar Mascotas', value: '2' },
-                { name: '3. Logout', value: '3' },
+                { name: '3. Ver Catálogo', value: '3' }, 
+                new inquirer.Separator(),
+                { name: '4. Logout', value: '4' },
             ],
         },
     ]);
     return choice;
 }
-
 // --- PREFERENCIAS ---
 async function showPreferencesMenu() {
     const { choice } = await inquirer.prompt([
@@ -81,7 +82,7 @@ async function promptForPreferenceToDelete() {
 // --- AUTENTICACION ---
 async function getRegistrationData() {
     console.log('\n--- Formulario de Registro ---');
-    // Pide exactamente los mismos campos que tu función original
+    
     const userData = await inquirer.prompt([
         {
             type: 'input',
@@ -184,6 +185,24 @@ async function promptForPetId(action) {
     return id;
 }
 
+// -- CATALOGO --
+async function showCatalogMenu() {
+    const { choice } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'choice',
+            message: '📚 Catálogo',
+            choices: [
+                { name: '1. Listar Productos', value: '1' },
+                { name: '2. Listar Servicios', value: '2' },
+                new inquirer.Separator(),
+                { name: '3. Volver al menú principal', value: '3' },
+            ],
+        },
+    ]);
+    return choice;
+}
+
 function close() {
     rl.close();
 }
@@ -199,6 +218,7 @@ module.exports = {
     promptForPetDetails,
     promptForPetId,
     promptForLogoutConfirmation,
+    showCatalogMenu,
     close: () => {
         console.log('Adios!')
     }

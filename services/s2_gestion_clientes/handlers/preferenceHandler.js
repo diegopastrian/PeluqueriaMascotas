@@ -32,17 +32,13 @@ async function handleListPreferences(fields, socket) {
             'SELECT id_preferencia, tipo, id_referencia FROM Preferencias WHERE id_cliente = $1',
             [id_cliente]
         );
-        console.log(`Preferencias encontradas: ${result.rows.length}`);
-        if (result.rows.length === 0) {
+        const preferences = result.rows;
+        if (preferences.length === 0) {
             const responseData = 'listar_pref;';
             const emptyResponse = buildTransaction(SERVICE_NAME_CODE, responseData);
             return socket.write(emptyResponse);
         }
-        const preferences = result.rows;
-
-        if (preferences.length === 0) {
-            return 'listar_pref;'; // Devuelve el prefijo de la operacion y un cuerpo vacio
-        }
+        
 
         const preferencesString = preferences.map(p => 
             `${p.id_preferencia},${p.tipo_preferencia},${p.id_referencia}`
