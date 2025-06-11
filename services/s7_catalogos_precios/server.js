@@ -175,8 +175,38 @@ serviceSocketToBus.on('data', async (data) => {
                     }
                     break;
 
-                case 'CATOS':
-                    if (fields.length !== 2) {
+                case 'CATOPP': // Obtener todos los datos de varios productos por ID
+                    if (fields.length !== 2) { 
+                        const errorResponse = buildTransaction('CATPS', `CATOPP;Formato inválido: CATOPP;id_producto`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+                    const idsString = fields[1];
+                    const productIds = idsString.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+                    if (productIds.length === 0) {
+                        const errorResponse = buildTransaction('CATPS', `CATOPP;IDs de producto inválidos`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+                    try {
+                        const productos = await productHandler.getProductsByIds(productIds, pool);
+                        if (productos.length === 0) {
+                            const errorResponse = buildTransaction('CATPS', `CATOPP;No se encontraron productos`);
+                            serviceSocketToBus.write(errorResponse);    
+                            break;
+                        }
+                        const productosStr = productos.map(p => `${p.id_producto},${p.nombre},${p.descripcion},${p.precio},${p.stock},${p.imagen_url}`).join('|');
+                        const response = buildTransaction('CATPS', `CATOPP;${productosStr}`);
+                        console.log(`[${config.SERVICE_NAME_CODE}] Enviando datos de productos: Se enviaron ${productos.length} productos`);
+                        serviceSocketToBus.write(response);
+                    } catch (error) {
+                        const errorResponse = buildTransaction('CATPS', `CATOPP;Error al obtener productos`);
+                        serviceSocketToBus.write(errorResponse);
+                    }
+                    break;
+
+                case 'CATOS': // obtener servicio por id
+                    if (fields.length !== 2) { 
                         const errorResponse = buildTransaction(config.SERVICE_CODE, `CATOS;Formato inválido: CATOS;id_servicio`);
                         serviceSocketToBus.write(errorResponse);
                         break;
@@ -206,7 +236,34 @@ serviceSocketToBus.on('data', async (data) => {
                         serviceSocketToBus.write(errorResponse);
                     }
                     break;
-
+                case 'CATOSS': // Obtener servicios por IDs
+                    if (fields.length !== 2 || !fields[1]) {
+                        const errorResponse = buildTransaction(config.SERVICE_CODE, `CATOSS;Formato inválido: CATOSS;id_servicio1,id_servicio2,...`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+                    const idsStringServicios = fields[1];
+                    const serviceIds = idsStringServicios.split(',').map(id => parseInt(id.trim())).filter(id => !isNaN(id));
+                    if (serviceIds.length === 0) {
+                        const errorResponse = buildTransaction(config.SERVICE_CODE, `CATOSS;IDs de servicio inválidos`);
+                        serviceSocketToBus.write(errorResponse);
+                        break;
+                    }
+                    try {
+                        const servicios = await serviceHandler.getServicesByIds(serviceIds, pool);
+                        if (servicios.length === 0) {
+                            const errorResponse = buildTransaction(config.SERVICE_CODE, `CATOSS;No se encontraron servicios`);
+                            serviceSocketToBus.write(errorResponse);
+                            break;
+                        }
+                        const serviciosStr = servicios.map(s => `${s.id_servicio},${s.nombre},${s.descripcion},${s.precio},${s.tiempo_estimado}`).join('|');
+                        const response = buildTransaction(config.SERVICE_CODE, `CATOSS;${serviciosStr}`);
+                        serviceSocketToBus.write(response);
+                    } catch (error) {
+                        const errorResponse = buildTransaction(config.SERVICE_CODE, `CATOSS;Error al obtener servicios`);
+                        serviceSocketToBus.write(errorResponse);
+                    }
+                    break;
                 case 'CATAP': // Agregar producto
                     if (fields.length !== 7) {
                         const errorMsg = 'CATAP;Formato inválido: CATAP;token;nombre;descripcion;precio;stock;imagen_url';

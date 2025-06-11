@@ -26,6 +26,30 @@ async function getProductById(id, pool) {
         throw error;
     }
 }
+// Obtener varios productos para no hacer muchas llamadas a la base de datos
+async function getProductsByIds(ids, pool) {
+    try {
+        // Si el array de IDs está vacío, no hacemos nada y devolvemos un array vacío.
+        if (!ids || ids.length === 0) {
+            return [];
+        }
+
+        // CORRECCIÓN 1: La consulta ahora usa '= ANY($1)' para buscar en un array.
+        const query = 'SELECT * FROM productos WHERE id_producto = ANY($1)';
+        
+        // CORRECCIÓN 2: El valor que pasamos es el array de IDs en sí.
+        const values = [ids]; 
+        
+        const { rows } = await pool.query(query, values);
+
+        // CORRECCIÓN 3: Devolvemos el array completo de filas encontradas.
+        return rows;
+
+    } catch (error) {
+        console.error('Error al obtener productos por IDs:', error.message);
+        throw error;
+    }
+}
 
 // Agregar un producto (CATAP)
 async function addProduct(nombre, descripcion, precio, stock, imagen_url, pool) {
@@ -93,6 +117,7 @@ module.exports = {
     listProducts,
     getProductById,
     addProduct,
-    updateProduct
+    updateProduct,
+    getProductsByIds
 };
 

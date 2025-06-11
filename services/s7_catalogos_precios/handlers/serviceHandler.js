@@ -59,6 +59,48 @@ async function getServiceById(id, pool) {
     }
 }
 
+async function getServicesByIds(ids, pool) {
+    try {
+        // Si el array de IDs está vacío, devolvemos un array vacío para evitar una consulta innecesaria.
+        if (!ids || ids.length === 0) {
+            return [];
+        }
+
+        // CORRECCIÓN 1: La consulta ahora usa '= ANY($1)' para buscar en un array.
+        // Mantenemos la lógica de EXTRACT para el tiempo_estimado.
+        const query = `
+            SELECT
+                id_servicio,
+                nombre,
+                descripcion,
+                precio,
+                EXTRACT(EPOCH FROM tiempo_estimado)/60 AS tiempo_estimado_minutos
+            FROM servicios
+            WHERE id_servicio = ANY($1)
+        `;
+
+        // CORRECCIÓN 2: El valor que pasamos es el array de IDs.
+        const values = [ids];
+        const { rows } = await pool.query(query, values);
+
+        // CORRECCIÓN 3: Procesamos y devolvemos el array completo de filas encontradas.
+        // Hacemos el redondeo para cada uno de los servicios encontrados.
+        const services = rows.map(row => ({
+            id_servicio: row.id_servicio,
+            nombre: row.nombre,
+            descripcion: row.descripcion,
+            precio: row.precio,
+            tiempo_estimado: Math.round(row.tiempo_estimado_minutos)
+        }));
+
+        return services;
+
+    } catch (error) {
+        console.error('Error al obtener servicios por IDs:', error);
+        throw error;
+    }
+}
+
 // Agregar un servicio
 async function addService(nombre, descripcion, precio, tiempo_estimado_minutos, pool) {
     try {
@@ -119,5 +161,6 @@ module.exports = {
     listServices,
     getServiceById,
     addService,
-    updateService
+    updateService,
+    getServicesByIds
 };

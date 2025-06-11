@@ -2,6 +2,7 @@
 
 const bus = require('../services/busService');
 const ui = require('../ui/consoleUI');
+const preferenceActions = require('./preferenceActions');
 
 // Función principal que muestra el menú del catálogo y enruta
 async function handleCatalogSubMenu(token) {
@@ -40,6 +41,18 @@ async function handleListProducts(token) {
         console.log('\n--- 📦 Catálogo de Productos ---');
         console.table(products);
         console.log('--------------------------------\n');
+        const choice = await ui.promptForPostListingAction();
+        switch (choice) {
+            case 'add_preference':
+                const availableIds = products.map(p => p.id_producto);
+                await preferenceActions.handleSavePreference(token, 'producto', availableIds);
+                break;
+            case 'add_to_cart':
+                console.log('\n(Funcionalidad de carrito por implementar...)\n');
+                break;
+            case 'back':
+                return;
+        }
     } catch (e) {
         console.error('\n❌ Error procesando la respuesta del servidor:', e.message);
     }

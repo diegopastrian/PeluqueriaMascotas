@@ -74,7 +74,7 @@ serviceSocketToBus.on('data', async (data) => {
                     authHandler.handleRegister_employee(fields, serviceSocketToBus);
                     break;                    
                 // preferencias
-                case 'PREFG': //CAMBIAR EL NOMBNRE 
+                case 'guardar_pref': //CAMBIAR EL NOMBNRE 
                     preferenceHandler.handleSavePreference(fields, serviceSocketToBus);
                     break;
                 case 'listar_pref':
