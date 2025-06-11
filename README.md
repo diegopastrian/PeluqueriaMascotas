@@ -12,7 +12,7 @@ El sistema está diseñado con una arquitectura de microservicios que se comunic
     
 *   **Capa de Clientes (Frontend):** Compuesta por 3 clientes distintos (para usuarios, empleados y administradores) que consumen los servicios del backend.
     
-*   **Bus de Transacciones:** Un intermediario que utiliza **ZeroMQ (ZMQ)** para gestionar la comunicación entre clientes y servicios.
+*   **Bus de Transacciones:** Un intermediario para gestionar la comunicación entre clientes y servicios.
     
 
 Tecnologías Utilizadas
@@ -21,8 +21,6 @@ Tecnologías Utilizadas
 *   **Backend:** Node.js
     
 *   **Base de Datos:** PostgreSQL
-    
-*   **Comunicación:** ZeroMQ (ZMQ)
     
 *   **Cliente de Consola (C1):** Node.js con inquirer para la interactividad.
     
@@ -38,7 +36,16 @@ Estructura del Repositorio
 
 El proyecto está organizado en una estructura de monorepo con los siguientes directorios principales:
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   /  ├── bus_service_helpers/  # Lógica común para el formato de transacciones  ├── clients/              # Contiene los diferentes clientes (C1, C2, C3)  │   ├── c1_cliente_web_usuarios/  │   ├── c2_interfaz_empleados/  │   └── c3_interfaz_administrador/  ├── database/             # Scripts SQL para la creación de esquemas y migraciones  ├── services/             # Contiene los microservicios del backend (S1 a S8)  │   ├── s1_gestion_citas/  │   └── s2_gestion_clientes/  └── README.md   `
+├── bus_service_helpers/  # Lógica común para el formato de transacciones
+├── clients/              # Contiene los diferentes clientes (C1, C2, C3)
+│   ├── c1_cliente_web_usuarios/
+│   ├── c2_interfaz_empleados/
+│   └── c3_interfaz_administrador/
+├── database/             # Scripts SQL para la creación de esquemas y migraciones
+├── services/             # Contiene los microservicios del backend (S1 a S8)
+│   ├── s1_gestion_citas/
+│   └── s2_gestion_clientes/
+└── README.md
 
 Guía de Instalación y Puesta en Marcha
 --------------------------------------
@@ -58,7 +65,8 @@ Sigue estos pasos para configurar y ejecutar el entorno de desarrollo local.
 
 Bash
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   git clone https://github.com/diegopastrian/PeluqueriaMascotas.git  cd PeluqueriaMascotas   `
+git clone https://github.com/diegopastrian/PeluqueriaMascotas.git
+cd PeluqueriaMascotas
 
 ### 3\. Configuración de la Base de Datos
 
@@ -66,31 +74,22 @@ Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQL
     
 2.  Ejecuta el script de creación de esquemas para generar todas las tablas necesarias, que se encuentra en database/migrations/create\_schema.sql.
     
-
-### 4\. Configuración del Entorno
-
-Cada microservicio en la carpeta /services necesita su propio archivo de configuración .env.
-
-1.  Para cada servicio (ej: services/s2\_gestion\_clientes/), crea un archivo llamado .env.
-    
-2.  Copia el contenido del siguiente ejemplo y pégalo en cada archivo .env, ajustando los valores según tu configuración local.
-    
-
-**.env.example**
-
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   # Puerto para el servicio específico (ej. S2_PORT para el servicio 2)  S2_PORT=5556  # Credenciales de la Base de Datos PostgreSQL  DB_USER=postgres  DB_HOST=localhost  DB_DATABASE=peluqueria_db  DB_PASSWORD=tu_contraseña_secreta  DB_PORT=5432  # Secreto para firmar los JSON Web Tokens (debe ser el mismo en todos los servicios)  JWT_SECRET=un_secreto_muy_largo_y_dificil_de_adivinar   `
-
-### 5\. Instalación de Dependencias
+### 4\. Instalación de Dependencias
 
 Cada servicio y cliente tiene sus propias dependencias. Debes instalarlas en cada directorio por separado.
 
 Bash
+`# Ejemplo para el servicio S2
+cd services/s2_gestion_clientes
+npm install
 
-Plain textANTLR4BashCC#CSSCoffeeScriptCMakeDartDjangoDockerEJSErlangGitGoGraphQLGroovyHTMLJavaJavaScriptJSONJSXKotlinLaTeXLessLuaMakefileMarkdownMATLABMarkupObjective-CPerlPHPPowerShell.propertiesProtocol BuffersPythonRRubySass (Sass)Sass (Scss)SchemeSQLShellSwiftSVGTSXTypeScriptWebAssemblyYAMLXML`   # Ejemplo para el servicio S2  cd services/s2_gestion_clientes  npm install  # Ejemplo para el cliente C1  cd clients/c1_cliente_web_usuarios  npm install   `
+# Ejemplo para el cliente C1
+cd clients/c1_cliente_web_usuarios
+npm install`
 
 _Repite este proceso para cada componente que desees ejecutar._
 
-### 6\. Ejecución del Sistema
+### 5\. Ejecución del Sistema
 
 1.  \# Terminal 1cd services/s2\_gestion\_clientesnode server.js# Deberías ver: Servicio de Gestión de Clientes (S2) escuchando en el puerto 5556
     
@@ -102,30 +101,30 @@ Componentes del Sistema
 
 #### Clientes
 
-*   **\[C1\] Cliente de Consola para Usuarios:** Permite a los usuarios registrarse, iniciar sesión y gestionar sus mascotas y preferencias. (Parcialmente Completado)
+*   **\[C1\] Cliente de Consola para Usuarios:** Permite a los usuarios registrarse, iniciar sesión y gestionar sus mascotas y preferencias. 
     
-*   **\[C2\] Interfaz Web para Empleados:** Permitirá a los empleados gestionar citas, registrar ventas y consultar inventario. (Pendiente)
+*   **\[C2\] Interfaz Web para Empleados:** Permitirá a los empleados gestionar citas, registrar ventas y consultar inventario. 
     
-*   **\[C3\] Interfaz Web para Administradores:** Permitirá a los administradores gestionar catálogos, inventario y ver reportes. (Pendiente)
+*   **\[C3\] Interfaz Web para Administradores:** Permitirá a los administradores gestionar catálogos, inventario y ver reportes. 
     
 
 #### Servicios
 
-*   **\[S1\] Gestión de Citas (CITAS):** Gestiona la creación, cancelación y listado de citas. (Pendiente)
+*   **\[S1\] Gestión de Citas (CITAS):** Gestiona la creación, cancelación y listado de citas.
     
-*   **\[S2\] Gestión de Clientes (CLIEN):** Responsable de la autenticación, perfiles, mascotas y preferencias de los usuarios. (Casi Listo)
+*   **\[S2\] Gestión de Clientes (CLIEN):** Responsable de la autenticación, perfiles, mascotas y preferencias de los usuarios. 
     
-*   **\[S3\] Historial de Mascotas (HIMAS):** Registra y consulta el historial de visitas y compras por mascota. (Pendiente)
+*   **\[S3\] Historial de Mascotas (HIMAS):** Registra y consulta el historial de visitas y compras por mascota. 
     
-*   **\[S4\] Notificaciones (NOTIF):** Envía notificaciones a los usuarios. (Pendiente)
+*   **\[S4\] Notificaciones (NOTIF):** Envía notificaciones a los usuarios. 
     
-*   **\[S5\] Órdenes de Compra (ORCOM):** Gestiona las órdenes de compra generadas por ventas. (Pendiente)
+*   **\[S5\] Órdenes de Compra (ORCOM):** Gestiona las órdenes de compra generadas por ventas. 
     
-*   **\[S6\] Generación de Comprobantes (GECOM):** Genera boletas o facturas de las ventas. (Pendiente)
+*   **\[S6\] Generación de Comprobantes (GECOM):** Genera boletas o facturas de las ventas. 
     
-*   **\[S7\] Catálogos y Precios (CATAL):** Provee la lista y detalles de productos y servicios. (Pendiente)
+*   **\[S7\] Catálogos y Precios (CATAL):** Provee la lista y detalles de productos y servicios. 
     
-*   **\[S8\] Gestión de Inventario (INVEN):** Administra el stock de los productos. (Pendiente)
+*   **\[S8\] Gestión de Inventario (INVEN):** Administra el stock de los productos. 
     
 
 Protocolo de Comunicación
