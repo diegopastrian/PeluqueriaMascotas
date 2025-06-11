@@ -95,7 +95,7 @@ async function handleOperation(data, socket) {
                     continue;
                 }
 
-                if (authResult.tipo_usuario !== 'veterinario' && authResult.tipo_usuario !== 'empleado') {
+                if (authResult.tipo_usuario !== 'veterinario' && authResult.tipo_usuario !== 'empleado' && authResult.tipo_usuario !== 'administrador') {
                     responseData = `ajustar;Solo los empleados pueden ajustar el stock`;
                     socket.write(buildTransaction(SERVICE_CODE, responseData));
                     continue;
@@ -161,7 +161,7 @@ async function handleOperation(data, socket) {
                     continue;
                 }
 
-                if (authResult.tipo_usuario !== 'veterinario' && authResult.tipo_usuario !== 'empleado') {
+                if (authResult.tipo_usuario !== 'veterinario' && authResult.tipo_usuario !== 'empleado' && authResult.tipo_usuario !== 'administrador') {
                     responseData = `agregar;Solo los empleados pueden agregar productos`;
                     socket.write(buildTransaction(SERVICE_CODE, responseData));
                     continue;
