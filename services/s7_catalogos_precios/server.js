@@ -175,16 +175,16 @@ serviceSocketToBus.on('data', async (data) => {
                     }
                     break;
 
-                case 'CATOS': // Obtener todos los datos de un servicio
+                case 'CATOS':
                     if (fields.length !== 2) {
-                        const errorResponse = buildTransaction('CATPS', `CATOS;Formato inválido: CATOS;id_servicio`);
+                        const errorResponse = buildTransaction(config.SERVICE_CODE, `CATOS;Formato inválido: CATOS;id_servicio`);
                         serviceSocketToBus.write(errorResponse);
                         break;
                     }
 
                     const idServicioCompleto = parseInt(fields[1]);
                     if (isNaN(idServicioCompleto)) {
-                        const errorResponse = buildTransaction('CATPS', `CATOS;ID de servicio inválido`);
+                        const errorResponse = buildTransaction(config.SERVICE_CODE, `CATOS;ID de servicio inválido`);
                         serviceSocketToBus.write(errorResponse);
                         break;
                     }
@@ -193,19 +193,20 @@ serviceSocketToBus.on('data', async (data) => {
                         const servicio = await serviceHandler.getServiceById(idServicioCompleto, pool);
 
                         if (!servicio) {
-                            const errorResponse = buildTransaction('CATPS', `CATOS;Servicio no encontrado`);
+                            const errorResponse = buildTransaction(config.SERVICE_CODE, `CATOS;Servicio no encontrado`);
                             serviceSocketToBus.write(errorResponse);
                             break;
                         }
 
                         const servicioStr = `${servicio.id_servicio},${servicio.nombre},${servicio.descripcion},${servicio.precio},${servicio.tiempo_estimado}`;
-                        const response = buildTransaction('CATPS', `CATOS;${servicioStr}`);
+                        const response = buildTransaction(config.SERVICE_CODE, `CATOS;${servicioStr}`);
                         serviceSocketToBus.write(response);
                     } catch (error) {
-                        const errorResponse = buildTransaction('CATPS', `CATOS;Error al obtener servicio`);
+                        const errorResponse = buildTransaction(config.SERVICE_CODE, `CATOS;Error al obtener servicio`);
                         serviceSocketToBus.write(errorResponse);
                     }
                     break;
+
 
             }
 

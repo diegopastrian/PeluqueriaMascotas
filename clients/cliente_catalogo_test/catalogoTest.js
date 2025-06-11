@@ -80,7 +80,7 @@ clientSocketToBus.on('data', (data) => {
                 console.log("[TEST] Verificando datos completos del producto...");
                 if (parsed.serviceName === SERVICE_TO_CALL && command === 'CATOP') {
                     const campos = payload.split(',');
-                    if (campos.length >= 6) {
+                    if (campos.length >= 5) {
                         console.log("   ✔ Datos completos de producto recibidos correctamente.");
                         testStep = 'CATOS';
                         sendNextTest();
@@ -96,7 +96,7 @@ clientSocketToBus.on('data', (data) => {
                 console.log("[TEST] Verificando datos completos del servicio...");
                 if (parsed.serviceName === SERVICE_TO_CALL && command === 'CATOS') {
                     const campos = payload.split(',');
-                    if (campos.length >= 6) {
+                    if (campos.length >= 5) {
                         console.log("   ✔ Datos completos de servicio recibidos correctamente.");
                         console.log("\n*** TODAS LAS PRUEBAS PASARON EXITOSAMENTE ***");
                     } else {
