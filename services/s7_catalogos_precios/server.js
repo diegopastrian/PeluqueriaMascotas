@@ -238,7 +238,7 @@ healthApp.listen(HEALTH_PORT, () => {
 // --- REST API opcional para depuración ---
 app.use(express.json());
 
-app.listen(config.API_PORT || 3007, () => {
+app.listen(config.API_PORT || 3004, () => {
     console.log(`[${config.SERVICE_NAME_CODE}] API REST escuchando en puerto ${config.API_PORT || 3004}`);
 });
 

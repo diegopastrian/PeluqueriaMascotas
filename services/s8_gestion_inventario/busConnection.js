@@ -6,7 +6,7 @@ const serviceSocketToBus = new net.Socket();
 
 function sendSinit(callback) {
     const sinitTransaction = buildTransaction('sinit', SERVICE_CODE);
-    console.log(`[${SERVICE_NAME_CODE}] Enviando transacción de activación: ${sinitTransaction}`);
+    console.log(`[${SERVICE_NAME_CODE}] Enviando transaccion de activacion: ${sinitTransaction}`);
     serviceSocketToBus.write(sinitTransaction);
 
     const onData = (data) => {
@@ -38,7 +38,7 @@ function connectToBus(callback) {
         console.log(`[${SERVICE_NAME_CODE}] Conectado al Bus en ${BUS_HOST}:${BUS_PORT}`);
         sendSinit((error) => {
             if (error) {
-                console.error(`[${SERVICE_NAME_CODE}] Error durante la activación: ${error.message}`);
+                console.error(`[${SERVICE_NAME_CODE}] Error durante la activacion: ${error.message}`);
                 serviceSocketToBus.destroy();
                 callback(error);
                 return;
@@ -49,11 +49,11 @@ function connectToBus(callback) {
     });
 
     serviceSocketToBus.on('close', () => {
-        console.log(`[${SERVICE_NAME_CODE}] Conexión cerrada con el Bus.`);
+        console.log(`[${SERVICE_NAME_CODE}] Conexion cerrada con el Bus.`);
     });
 
     serviceSocketToBus.on('error', (err) => {
-        console.error(`[${SERVICE_NAME_CODE}] Error de conexión con el Bus: ${err.message}`);
+        console.error(`[${SERVICE_NAME_CODE}] Error de conexion con el Bus: ${err.message}`);
     });
 }
 

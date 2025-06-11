@@ -92,7 +92,7 @@ CREATE TABLE carrito_productos
     PRIMARY KEY (id_carrito, id_producto)
 );
 
--- Órdenes (compras realizadas)
+-- ordenes (compras realizadas)
 CREATE TABLE ordenes
 (
     id_orden   SERIAL PRIMARY KEY,

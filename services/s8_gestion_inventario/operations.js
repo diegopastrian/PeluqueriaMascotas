@@ -27,18 +27,18 @@ async function handleOperation(data, socket) {
 
             const fields = parsed.data.split(';');
             if (fields.length < 1) {
-                responseData = `Formato inválido: Se espera operación`;
+                responseData = `Formato invalido: Se espera operacion`;
                 socket.write(buildTransaction(SERVICE_CODE, responseData));
                 continue;
             }
 
             const operation = fields[0];
-            console.log(`[${SERVICE_NAME_CODE}] Procesando operación: ${operation} con datos: ${parsed.data}`);
+            console.log(`[${SERVICE_NAME_CODE}] Procesando operacion: ${operation} con datos: ${parsed.data}`);
 
-            // --- Operación: Consultar Stock ---
+            // --- Operacion: Consultar Stock ---
             if (operation === 'consultar') {
                 if (fields.length !== 2) {
-                    responseData = `consultar;Formato inválido: Se esperan 2 campos (consultar;id_producto)`;
+                    responseData = `consultar;Formato invalido: Se esperan 2 campos (consultar;id_producto)`;
                     socket.write(buildTransaction(SERVICE_CODE, responseData));
                     continue;
                 }
@@ -47,7 +47,7 @@ async function handleOperation(data, socket) {
                 const idProductoNum = parseInt(id_producto);
 
                 if (isNaN(idProductoNum)) {
-                    responseData = `consultar;ID de producto inválido`;
+                    responseData = `consultar;ID de producto invalido`;
                     socket.write(buildTransaction(SERVICE_CODE, responseData));
                     continue;
                 }
@@ -70,10 +70,10 @@ async function handleOperation(data, socket) {
                 }
             }
 
-            // --- Operación: Ajustar Stock ---
+            // --- Operacion: Ajustar Stock ---
             else if (operation === 'ajustar') {
                 if (fields.length !== 5) {
-                    responseData = `ajustar;Formato inválido: Se esperan 5 campos (ajustar;token;id_producto;cantidad_ajuste;motivo)`;
+                    responseData = `ajustar;Formato invalido: Se esperan 5 campos (ajustar;token;id_producto;cantidad_ajuste;motivo)`;
                     socket.write(buildTransaction(SERVICE_CODE, responseData));
                     continue;
                 }
@@ -83,7 +83,7 @@ async function handleOperation(data, socket) {
                 const cantidadAjusteNum = parseInt(cantidad_ajuste);
 
                 if (isNaN(idProductoNum) || isNaN(cantidadAjusteNum) || !motivo) {
-                    responseData = `ajustar;Datos incompletos o inválidos`;
+                    responseData = `ajustar;Datos incompletos o invalidos`;
                     socket.write(buildTransaction(SERVICE_CODE, responseData));
                     continue;
                 }
@@ -95,7 +95,7 @@ async function handleOperation(data, socket) {
                     continue;
                 }
 
-                if (authResult.tipo_usuario !== 'veterinario' && authResult.tipo_usuario !== 'empleado') {
+                if (authResult.tipo_usuario !== 'veterinario' && authResult.tipo_usuario !== 'empleado' && authResult.tipo_usuario !== 'administrador') {
                     responseData = `ajustar;Solo los empleados pueden ajustar el stock`;
                     socket.write(buildTransaction(SERVICE_CODE, responseData));
                     continue;
@@ -135,10 +135,10 @@ async function handleOperation(data, socket) {
                 }
             }
 
-            // --- Operación: Agregar Producto ---
+            // --- Operacion: Agregar Producto ---
             else if (operation === 'agregar') {
                 if (fields.length !== 7) {
-                    responseData = `agregar;Formato inválido: Se esperan 7 campos (agregar;token;nombre_prod;descripcion;precio_costo;precio_venta;stock_inicial)`;
+                    responseData = `agregar;Formato invalido: Se esperan 7 campos (agregar;token;nombre_prod;descripcion;precio_costo;precio_venta;stock_inicial)`;
                     socket.write(buildTransaction(SERVICE_CODE, responseData));
                     continue;
                 }
@@ -149,7 +149,7 @@ async function handleOperation(data, socket) {
                 const stockInicialNum = parseInt(stock_inicial);
 
                 if (!nombre_prod || !descripcion || isNaN(precioCostoNum) || isNaN(precioVentaNum) || isNaN(stockInicialNum) || stockInicialNum < 0) {
-                    responseData = `agregar;Datos incompletos o inválidos`;
+                    responseData = `agregar;Datos incompletos o invalidos`;
                     socket.write(buildTransaction(SERVICE_CODE, responseData));
                     continue;
                 }
@@ -161,7 +161,7 @@ async function handleOperation(data, socket) {
                     continue;
                 }
 
-                if (authResult.tipo_usuario !== 'veterinario' && authResult.tipo_usuario !== 'empleado') {
+                if (authResult.tipo_usuario !== 'veterinario' && authResult.tipo_usuario !== 'empleado' && authResult.tipo_usuario !== 'administrador') {
                     responseData = `agregar;Solo los empleados pueden agregar productos`;
                     socket.write(buildTransaction(SERVICE_CODE, responseData));
                     continue;
@@ -186,9 +186,9 @@ async function handleOperation(data, socket) {
                 }
             }
 
-            // --- Operación no reconocida ---
+            // --- Operacion no reconocida ---
             else {
-                responseData = `${operation};Operación desconocida`;
+                responseData = `${operation};Operacion desconocida`;
                 socket.write(buildTransaction(SERVICE_CODE, responseData));
             }
         } catch (error) {

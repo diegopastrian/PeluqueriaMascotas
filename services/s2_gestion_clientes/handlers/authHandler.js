@@ -2,14 +2,14 @@
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const {pool} = require('../db'); // Asume que db.js está en el directorio raíz del servicio
+const {pool} = require('../db'); // Asume que db.js esta en el directorio raiz del servicio
 const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper'); // Ajusta esta ruta si tu estructura es diferente
 const { SERVICE_CODE, SERVICE_NAME_CODE, SECRET_KEY } = require('../config');
 
 /**
  * Maneja el registro de un nuevo cliente.
- * Operación: registrar;nombre;apellido;correo;password;telefono
- * @param {string[]} fields - Los datos de la operación, divididos por ';'.
+ * Operacion: registrar;nombre;apellido;correo;password;telefono
+ * @param {string[]} fields - Los datos de la operacion, divididos por ';'.
  * @param {net.Socket} socket - El socket para enviar la respuesta al bus.
  */
 function handleRegister(fields, socket) {
@@ -89,9 +89,9 @@ function handleRegister(fields, socket) {
 }
 
 /**
- * Maneja la autenticación de un cliente.
- * Operación: login;correo;password
- * @param {string[]} fields - Los datos de la operación, divididos por ';'.
+ * Maneja la autenticacion de un cliente.
+ * Operacion: login;correo;password
+ * @param {string[]} fields - Los datos de la operacion, divididos por ';'.
  * @param {net.Socket} socket - El socket para enviar la respuesta al bus.
  */
 function handleLogin(fields, socket) {
@@ -112,23 +112,36 @@ function handleLogin(fields, socket) {
     }
 
     // Buscar usuario por correo
-    pool.query('SELECT id_cliente, nombre, password FROM clientes WHERE email = $1', [correo], (err, result) => {
+    pool.query(  `
+  SELECT id_cliente, nombre, password, NULL AS rol, 'cliente' AS tipo
+  FROM clientes
+  WHERE email = $1
+
+  UNION ALL
+
+  SELECT id_empleado, nombre, password, rol, 'empleado' AS tipo
+  FROM empleados
+  WHERE email = $1
+
+  LIMIT 1
+  `, [correo], (err, result) => {
         if (err) {
             console.error(`[${SERVICE_NAME_CODE}] Error en DB durante login: ${err.message}`);
             const responseData = `login;Error interno al autenticar`;
-            const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+            const errorResponse = buildTransaction(SERVICE_CODE, responseData);
             socket.write(errorResponse);
             return;
         }
-
+      //  console.log("es es el valor de rowwwwwwwwwwwwsssss" + result.rows.length);
         if (result.rows.length === 0) {
             const responseData = `login;Correo no encontrado`;
-            const errorResponse = buildTransaction(SERVICE_CODE, responseData, 'NK');
+            const errorResponse = buildTransaction(SERVICE_CODE, responseData);
             socket.write(errorResponse);
             return;
         }
 
         const user = result.rows[0];
+        
         // Comparar la contraseña proporcionada con el hash almacenado
         bcrypt.compare(password_plain, user.password, (err, isValid) => {
             if (err) {
@@ -147,16 +160,79 @@ function handleLogin(fields, socket) {
             }
 
             // Generar JWT si las credenciales son correctas
-            const token = jwt.sign({ id: user.id_cliente, correo: correo }, SECRET_KEY, { expiresIn: '1h' });
+            const token = jwt.sign({ id: user.id_cliente, correo: correo, role: user.rol }, SECRET_KEY, { expiresIn: '1h' });
             const responseData = `login;${token};${user.id_cliente};${user.nombre}`;
-            const response = buildTransaction(SERVICE_CODE, responseData, 'OK');
+            const response = buildTransaction(SERVICE_CODE, responseData);
+            console.log(response);
             socket.write(response);
         });
     });
 }
+async function handleRegister_employee(fields, socket) {
+    if (fields.length !== 7) { // registrar;nombre;apellido;email;password;telefono;rol
+        const errorResponse = buildTransaction(SERVICE_CODE, `registrar_empleado;Formato invalido: Se esperan 7 campos (registrar;nombre;apellido;email;password;telefono;rol)`);
+        console.log(`[${SERVICE_NAME_CODE}] Enviando error: ${errorResponse}`);
+        socket.write(errorResponse);
+        return;
+    }
+
+    const [, nombre, apellido, email, password, telefono, rol] = fields;
+
+    if (!nombre || !apellido || !email || !password || !telefono || !rol) {
+        const errorResponse = buildTransaction(SERVICE_CODE, `registrar;Todos los campos son obligatorios`);
+        console.log(`[${SERVICE_NAME_CODE}] Enviando error: ${errorResponse}`);
+        socket.write(errorResponse);
+        return;
+    }
+
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!emailRegex.test(email)) {
+        const errorResponse = buildTransaction(SERVICE_CODE, `registrar;Email invalido`);
+        console.log(`[${SERVICE_NAME_CODE}] Enviando error: ${errorResponse}`);
+        socket.write(errorResponse);
+        return;
+    }
+
+    try {
+        const resultExists = await pool.query(
+            'SELECT id_empleado FROM empleados WHERE email = $1',
+            [email]
+        );
+        if (resultExists.rows.length > 0) {
+            const errorResponse = buildTransaction(SERVICE_CODE, `registrar;El email ya esta registrado`);
+            console.log(`[${SERVICE_NAME_CODE}] Enviando error: ${errorResponse}`);
+            socket.write(errorResponse);
+            return;
+        }
+
+        const saltRounds = 10;
+        const hashedPassword = await bcrypt.hash(password, saltRounds);
+
+        const result = await pool.query(
+            'INSERT INTO empleados (nombre, apellido, email, password, rol, telefono) VALUES ($1, $2, $3, $4, $5, $6) RETURNING id_empleado, email',
+            [nombre, apellido, email, hashedPassword, rol, telefono]
+        );
+
+        const { id_empleado, email: userEmail } = result.rows[0];
+        console.log(`[${SERVICE_NAME_CODE}] Empleado creado: ID=${id_empleado}, Email=${userEmail}`);
+
+        const responseData = `registrar_empleado;${id_empleado};${userEmail}`;
+        const response = buildTransaction(SERVICE_CODE, responseData);
+        console.log(`[${SERVICE_NAME_CODE}] Enviando: ${response}`);
+        socket.write(response);
+    } catch (err) {
+        console.error(`[${SERVICE_NAME_CODE}] Error en registro de empleado: ${err.message}`);
+        const errorResponse = buildTransaction(SERVICE_CODE, `registrar;Error al registrar el empleado: ${err.message.replace(/[^a-zA-Z0-9 ;,.]/g, '')}`);
+        console.log(`[${SERVICE_NAME_CODE}] Enviando error: ${errorResponse}`);
+        socket.write(errorResponse);
+    }
+}
+    
 
 // Exportamos las funciones para que puedan ser usadas por server.js
 module.exports = {
     handleRegister,
-    handleLogin
+    handleLogin,
+    handleRegister_employee,
+    
 };

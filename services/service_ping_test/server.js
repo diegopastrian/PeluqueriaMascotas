@@ -31,7 +31,7 @@ serviceSocketToBus.on('data', (data) => {
             if (parsed.serviceName === "sinit" && parsed.status === "OK") {
                 console.log(`${logPrefix} <- Registro Exitoso. Escuchando peticiones...`);
             } else {
-                console.error(`${logPrefix} <- Falló el registro: ${parsed.data}`);
+                console.error(`${logPrefix} <- Fallo el registro: ${parsed.data}`);
             }
         } else {
             const receivedServiceCode = rawMessageFromBus.substring(5, 10);
@@ -41,7 +41,7 @@ serviceSocketToBus.on('data', (data) => {
                 const dataParts = incomingData.split(';');
                 const command = dataParts[0];
                 
-                console.log(`${logPrefix} <- Petición recibida con comando: '${command}'`);
+                console.log(`${logPrefix} <- Peticion recibida con comando: '${command}'`);
 
                 let responseData = '';
 
@@ -57,14 +57,14 @@ serviceSocketToBus.on('data', (data) => {
                         break;
                 }
                 
-                // --- INICIO DE LA CORRECCIÓN ---
-                // El servidor solo prepara los DATOS de la aplicación (comando;payload).
-                // NO debe añadir el estado "OK" aquí. El bus lo hará.
+                // --- INICIO DE LA CORRECCIoN ---
+                // El servidor solo prepara los DATOS de la aplicacion (comando;payload).
+                // NO debe añadir el estado "OK" aqui. El bus lo hara.
                 const applicationResponseData = `${command};${responseData}`;
                 
                 // Empaquetamos la respuesta para el bus.
                 const transactionResponseToBus = buildTransaction(SERVICE_CODE, applicationResponseData);
-                // --- FIN DE LA CORRECCIÓN ---
+                // --- FIN DE LA CORRECCIoN ---
                 
                 console.log(`${logPrefix} -> Enviando respuesta al bus: ${transactionResponseToBus}`);
                 serviceSocketToBus.write(transactionResponseToBus);
@@ -75,8 +75,8 @@ serviceSocketToBus.on('data', (data) => {
     }
 });
 
-serviceSocketToBus.on('close', () => console.log(`${logPrefix} Conexión con el Bus cerrada.`));
-serviceSocketToBus.on('error', (err) => console.error(`${logPrefix} Error de conexión:`, err.message));
+serviceSocketToBus.on('close', () => console.log(`${logPrefix} Conexion con el Bus cerrada.`));
+serviceSocketToBus.on('error', (err) => console.error(`${logPrefix} Error de conexion:`, err.message));
 
 const express = require('express');
 const healthApp = express();

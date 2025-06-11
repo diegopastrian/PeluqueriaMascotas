@@ -16,7 +16,7 @@ async function handleRegister() {
     });
     const responseParts = res.data.split(';');
     if (responseParts.length === 3 && !isNaN(parseInt(responseParts[1], 10))) {
-        console.log('\n[Éxito] ¡Usuario registrado! Ahora puedes iniciar sesión.');
+        console.log('\n[exito] ¡Usuario registrado! Ahora puedes iniciar sesion.');
     } else {
         // Si no, la segunda parte es el mensaje de error
         const errorMsg = responseParts[1] || 'Error desconocido del servicio.';
@@ -25,8 +25,8 @@ async function handleRegister() {
 }
 
 async function handleLogin() {
-    const data = await ui.getLoginData();
-    const payload = `login;${data.email};${data.password}`;
+    const data = await ui.promptForLogin();
+    const payload = `login;${data.correo};${data.password_plain}`;
 
     const res = await bus.send('CLIEN', payload);
 
@@ -40,10 +40,10 @@ async function handleLogin() {
     if (responseParts.length === 4 && responseParts[0] === 'login') {
         authToken = responseParts[1];
         username = responseParts[3];
-        console.log(`\n[Éxito] Bienvenido, ${username}!`);
+        console.log(`\n[exito] Bienvenido, ${username}!`);
         return{ authToken, username };
     } else {
-        const errorMsg = responseParts[1] || 'Credenciales inválidas o error desconocido.';
+        const errorMsg = responseParts[1] || 'Credenciales invalidas o error desconocido.';
         console.error(`\n[Error] Login fallido: ${errorMsg}`);
         authToken = null;
         username = '';
@@ -51,19 +51,21 @@ async function handleLogin() {
     }
 }
 
-async function handleLogout(authToken) {
-    const payload = `logout;${authToken}`;
-    
-    const res = await bus.send('CLIEN', payload);
-    if (res.status === 'OK') {
-        console.log('\n[Éxito] Has cerrado sesión correctamente.');
-    } else {
-        console.error(`\n[Error de Bus] No se pudo comunicar con el servicio CLIEN.`);
-        return;
-    }
+async function handleLogout() {
+    const confirmed = await ui.promptForLogoutConfirmation();
 
-    return { authToken: null, username: '' };
+    if (confirmed) {
+        console.log('Cerrando sesión...');
+        // Si el usuario confirma, devolvemos null para limpiar la sesión.
+        return { username: null, authToken: null, loggedOut: true };
+    } else {
+        console.log('Cierre de sesión cancelado.');
+        // Si el usuario cancela, devolvemos una bandera para no hacer nada.
+        return { loggedOut: false };
+    }
 }
+
+
 
 module.exports = {
     handleRegister,

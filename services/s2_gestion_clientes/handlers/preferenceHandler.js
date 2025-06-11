@@ -6,13 +6,13 @@ const { verifyToken } = require('../helpers/jwtHelper');
 const { SERVICE_CODE,  SERVICE_NAME_CODE } = require('../config');
 const jwtHelper = require('../helpers/jwtHelper');
 
-// Copiamos la lógica de 'PREFG'
+// Copiamos la logica de 'PREFG'
 function handleSavePreference(fields, socket) {
-    // ... (La lógica de validación, verificación de token y DB es EXACTAMENTE la misma que tenías)
-    // ... cópiala y pégala aquí
+    // ... (La logica de validacion, verificacion de token y DB es EXACTAMENTE la misma que tenias)
+    // ... copiala y pegala aqui
 }
 
-// Copiamos la lógica de 'PREFL'
+// Copiamos la logica de 'PREFL'
 async function handleListPreferences(fields, socket) {
     try {
         const token = fields[1]; 
@@ -22,7 +22,7 @@ async function handleListPreferences(fields, socket) {
         }
         const decoded = jwtHelper.verifyToken(token);
         if (!decoded) {
-            const errorResponse = buildTransaction(SERVICE_NAME_CODE, 'error;Token inválido', 'NK');
+            const errorResponse = buildTransaction(SERVICE_NAME_CODE, 'error;Token invalido', 'NK');
             return socket.write(errorResponse);
         }
 
@@ -41,7 +41,7 @@ async function handleListPreferences(fields, socket) {
         const preferences = result.rows;
 
         if (preferences.length === 0) {
-            return 'listar_pref;'; // Devuelve el prefijo de la operación y un cuerpo vacío
+            return 'listar_pref;'; // Devuelve el prefijo de la operacion y un cuerpo vacio
         }
 
         const preferencesString = preferences.map(p => 
@@ -50,6 +50,7 @@ async function handleListPreferences(fields, socket) {
 
         const responseData = `listar_pref;${preferencesString}`;
         const successResponse = buildTransaction(SERVICE_NAME_CODE, responseData);
+        console.log(`Enviando preferencias al cliente: ${id_cliente}`);
         socket.write(successResponse);
 
 
@@ -67,31 +68,31 @@ async function handleDeletePreference(fields, socket) {
         const id_preferencia = fields[2];
 
         if (!token || !id_preferencia) {
-            const errorResponse = buildTransaction(SERVICE_NAME_CODE, 'error;Faltan parámetros');
+            const errorResponse = buildTransaction(SERVICE_NAME_CODE, 'error;Faltan parametros');
             return socket.write(errorResponse);
         }
 
         // 2. Verificamos el token
         const decoded = jwtHelper.verifyToken(token);
         if (!decoded) {
-            const errorResponse = buildTransaction(SERVICE_NAME_CODE, 'error;Token inválido');
+            const errorResponse = buildTransaction(SERVICE_NAME_CODE, 'error;Token invalido');
             return socket.write(errorResponse);
         }
 
-        // 3. Ejecutamos la eliminación en la BD
+        // 3. Ejecutamos la eliminacion en la BD
         const { id_cliente } = decoded;
-        const [result] = await pool.query(
-            'DELETE FROM Preferencias WHERE id_preferencia = ? AND id_cliente = ?',
+        const result = await pool.query(
+            'DELETE FROM Preferencias WHERE id_preferencia = $1 AND id_cliente = $2',
             [id_preferencia, id_cliente]
         );
 
-        if (result.affectedRows === 0) {
-            const errorResponse = buildTransaction(SERVICE_NAME_CODE, 'error;Preferencia no encontrada o sin permiso');
-            return socket.write(errorResponse);
+        if (result.rowCount === 0) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;Preferencia no encontrada o sin permiso', 'NK'));
         }
 
-        // 4. Construimos y escribimos la respuesta de éxito
+        // 4. Construimos y escribimos la respuesta de exito
         const successResponse = buildTransaction(SERVICE_NAME_CODE, 'PREDE;PREFERENCIA_ELIMINADA');
+        console.log(`Preferencia ID ${id_preferencia} eliminada para el cliente ID ${id_cliente}`);
         socket.write(successResponse);
 
     } catch (error) {

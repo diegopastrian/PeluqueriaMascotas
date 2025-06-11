@@ -1,110 +1,175 @@
 // services/s2_gestion_clientes/handlers/petHandler.js
 
-const db = require('../db');
+const { pool } = require('../db');
 const jwtHelper = require('../helpers/jwtHelper');
-const transactionHelper = require('../../../bus_service_helpers/transactionHelper');
+const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper');
 
-// Función para verificar el token y extraer el ID del cliente
-async function authenticateAndGetClientId(token) {
+const SERVICE_NAME = 'CLIEN';
+
+async function handleCreatePet(fields, socket) {
     try {
+        const [, token, nombre, especie, raza, edad] = fields;
+
+        if (!token || !nombre || !raza || !especie || !edad) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;MASCR;Faltan parametros', 'NK'));
+        }
+
         const decoded = jwtHelper.verifyToken(token);
-        return decoded.id; // Asumiendo que el payload del token contiene 'id'
-    } catch (error) {
-        console.error('[PET HANDLER] Error de autenticación:', error.message);
-        throw new Error('Token inválido o expirado');
-    }
-}
-
-// MASCR: Crear una nueva mascota
-async function createPet(data) {
-    const [token, nombre, raza, fecha_nacimiento] = data.split(';');
-    try {
-        const clienteId = await authenticateAndGetClientId(token);
-        
-        const query = 'INSERT INTO Mascotas (cliente_id, nombre, raza, fecha_nacimiento) VALUES ($1, $2, $3, $4) RETURNING *';
-        const values = [clienteId, nombre, raza, fecha_nacimiento];
-        
-        const { rows } = await db.query(query, values);
-        console.log('[PET HANDLER] Mascota creada:', rows[0]);
-        return transactionHelper.buildTransaction('MASCR_OK', JSON.stringify(rows[0]));
-    } catch (error) {
-        console.error('[PET HANDLER] Error al crear mascota:', error.message);
-        return transactionHelper.buildTransaction('MASCR_ERROR', error.message);
-    }
-}
-
-// MASLI: Listar las mascotas de un cliente
-async function listPets(data) {
-    const [token] = data.split(';');
-    try {
-        const clienteId = await authenticateAndGetClientId(token);
-
-        const query = 'SELECT * FROM Mascotas WHERE cliente_id = $1';
-        const { rows } = await db.query(query, [clienteId]);
-        
-        console.log(`[PET HANDLER] Listando ${rows.length} mascotas para el cliente ${clienteId}`);
-        return transactionHelper.buildTransaction('MASLI_OK', JSON.stringify(rows));
-    } catch (error) {
-        console.error('[PET HANDLER] Error al listar mascotas:', error.message);
-        return transactionHelper.buildTransaction('MASLI_ERROR', error.message);
-    }
-}
-
-// MASUP: Actualizar una mascota existente
-async function updatePet(data) {
-    const [token, mascotaId, nombre, raza, fecha_nacimiento] = data.split(';');
-    try {
-        const clienteId = await authenticateAndGetClientId(token);
-
-        // Verificamos que la mascota pertenezca al cliente antes de actualizar
-        const checkQuery = 'SELECT * FROM Mascotas WHERE mascota_id = $1 AND cliente_id = $2';
-        const checkResult = await db.query(checkQuery, [mascotaId, clienteId]);
-
-        if (checkResult.rows.length === 0) {
-            throw new Error('Mascota no encontrada o no pertenece al usuario');
+        if (!decoded) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;MASCR;Token invalido', 'NK'));
         }
 
-        const query = 'UPDATE Mascotas SET nombre = $1, raza = $2, fecha_nacimiento = $3 WHERE mascota_id = $4 RETURNING *';
-        const values = [nombre, raza, fecha_nacimiento, mascotaId];
-        
-        const { rows } = await db.query(query, values);
-        console.log('[PET HANDLER] Mascota actualizada:', rows[0]);
-        return transactionHelper.buildTransaction('MASUP_OK', JSON.stringify(rows[0]));
+        const { id_cliente } = decoded;
+
+        // Usamos RETURNING id_mascota para obtener el ID de la nueva mascota en PostgreSQL
+        const result = await pool.query(
+            'INSERT INTO Mascotas (id_cliente, nombre, especie, raza, edad) VALUES ($1, $2, $3, $4, $5) RETURNING id_mascota',
+            [id_cliente, nombre, especie, raza, edad]
+        );
+
+        const newPetId = result.rows[0].id_mascota;
+        const responseData = `MASCR;${newPetId}`;
+        console.log(`Mascota creada: ID=${newPetId}, Cliente=${id_cliente}`);
+        socket.write(buildTransaction(SERVICE_NAME, responseData, 'OK'));
+
     } catch (error) {
-        console.error('[PET HANDLER] Error al actualizar mascota:', error.message);
-        return transactionHelper.buildTransaction('MASUP_ERROR', error.message);
+        console.error('Error en handleCreatePet:', error);
+        socket.write(buildTransaction(SERVICE_NAME, 'error;MASCR;Error interno del servidor', 'NK'));
     }
 }
 
-// MASDE: Eliminar una mascota
-async function deletePet(data) {
-    const [token, mascotaId] = data.split(';');
+// Operacion: MASLI;token
+async function handleListPets(fields, socket) {
     try {
-        const clienteId = await authenticateAndGetClientId(token);
-
-        // Verificamos que la mascota pertenezca al cliente antes de eliminar
-        const checkQuery = 'SELECT * FROM Mascotas WHERE mascota_id = $1 AND cliente_id = $2';
-        const checkResult = await db.query(checkQuery, [mascotaId, clienteId]);
-
-        if (checkResult.rows.length === 0) {
-            throw new Error('Mascota no encontrada o no pertenece al usuario');
+        const [, token] = fields;
+        if (!token) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;MASLI;Token no proporcionado', 'NK'));
         }
 
-        const query = 'DELETE FROM Mascotas WHERE mascota_id = $1';
-        await db.query(query, [mascotaId]);
-        
-        console.log(`[PET HANDLER] Mascota con ID ${mascotaId} eliminada`);
-        return transactionHelper.buildTransaction('MASDE_OK', `Mascota ${mascotaId} eliminada correctamente`);
+        const decoded = jwtHelper.verifyToken(token);
+        if (!decoded) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;MASLI;Token invalido', 'NK'));
+        }
+
+        const { id_cliente } = decoded;
+        const result = await pool.query(
+            'SELECT id_mascota, nombre, especie, raza, edad FROM Mascotas WHERE id_cliente = $1',
+            [id_cliente]
+        );
+
+        // Enviamos los resultados como un string JSON, tal como lo documentamos.
+        const responseData = `MASLI;${JSON.stringify(result.rows)}`;
+        console.log(`Mascotas encontradas para el cliente ID=${id_cliente}: ${result.rows.length}`);
+        socket.write(buildTransaction(SERVICE_NAME, responseData, 'OK'));
+
     } catch (error) {
-        console.error('[PET HANDLER] Error al eliminar mascota:', error.message);
-        return transactionHelper.buildTransaction('MASDE_ERROR', error.message);
+        console.error('Error en handleListPets:', error);
+        socket.write(buildTransaction(SERVICE_NAME, 'error;MASLI;Error interno del servidor', 'NK'));
     }
 }
 
+async function handleUpdatePet(fields, socket) {
+    try {
+        const [, token, id_mascota, nombre, especie, raza, edad]  = fields;
+
+        if (!token || !nombre || !raza || !especie || !edad) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;MASUP;Faltan parametros', 'NK'));
+        }
+
+        const decoded = jwtHelper.verifyToken(token);
+        if (!decoded) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;MASUP;Token invalido', 'NK'));
+        }
+        
+        const { id_cliente } = decoded;
+
+        // Actualizamos la mascota, asegurandonos de que pertenezca al cliente (por id_cliente)
+        const result = await pool.query(
+            'UPDATE Mascotas SET nombre = $1, especie = $2, raza = $3, edad = $4 WHERE id_mascota = $5 AND id_cliente = $6',
+            [nombre, especie, raza, edad, id_mascota, id_cliente]
+        );
+        if (result.rowCount === 0) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;MASUP;Mascota no encontrada o sin permiso', 'NK'));
+        }
+        console.log(`Mascota actualizada: ID=${id_mascota}, Cliente=${id_cliente}`);
+        socket.write(buildTransaction(SERVICE_NAME, 'MASUP;MASCOTA_ACTUALIZADA', 'OK'));
+
+    } catch (error) {
+        console.error('Error en handleUpdatePet:', error);
+        socket.write(buildTransaction(SERVICE_NAME, 'error;MASUP;Error interno del servidor', 'NK'));
+    }
+}
+
+// Operacion: MASDE;token;id_mascota
+async function handleDeletePet(fields, socket) {
+    try {
+        const [, token, id_mascota] = fields;
+        if (!token || !id_mascota) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;MASDE;Faltan parametros', 'NK'));
+        }
+
+        const decoded = jwtHelper.verifyToken(token);
+        if (!decoded) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;MASDE;Token invalido', 'NK'));
+        }
+
+        const { id_cliente } = decoded;
+
+        // Eliminamos la mascota, asegurandonos de que pertenezca al cliente
+        const result = await pool.query(
+            'DELETE FROM Mascotas WHERE id_mascota = $1 AND id_cliente = $2',
+            [id_mascota, id_cliente]
+        );
+
+        if (result.rowCount === 0) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;MASDE;Mascota no encontrada o sin permiso', 'NK'));
+        }
+        console.log(`Mascota eliminada: ID=${id_mascota}, Cliente=${id_cliente}`);
+        socket.write(buildTransaction(SERVICE_NAME, 'MASDE;MASCOTA_ELIMINADA', 'OK'));
+    } catch (error) {
+        console.error('Error en handleDeletePet:', error);
+        socket.write(buildTransaction(SERVICE_NAME, 'error;MASDE;Error interno del servidor', 'NK'));
+    }
+}
+
+async function handleGetSinglePet(fields, socket) {
+    try {
+        const [, token, id_mascota] = fields;
+        if (!token || !id_mascota) {
+            return socket.write(buildTransaction(SERVICE_NAME,'error;MASGE;Faltan parametros','NK'));
+        }
+
+        const decoded = jwtHelper.verifyToken(token);
+        if (!decoded) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;MASGE;Token invalido','NK'));
+        }
+
+        const { id_cliente } = decoded;
+
+        // Buscamos la mascota por su ID, asegurandonos de que pertenezca al cliente logueado
+        const result = await pool.query(
+            'SELECT id_mascota, nombre, especie, raza, edad FROM Mascotas WHERE id_mascota = $1 AND id_cliente = $2',
+            [id_mascota, id_cliente]
+        );
+        if (result.rows.length === 0) {
+            return socket.write(buildTransaction(SERVICE_NAME, 'error;MASGE;Mascota no encontrada o sin permiso', 'NK'));
+        }
+
+        const petData = result.rows[0];
+        const responseData = `MASGE;${JSON.stringify(petData)}`;
+        console.log(`Mascota encontrada: ID=${id_mascota}, Cliente=${id_cliente}`);
+        socket.write(buildTransaction(SERVICE_NAME, responseData, 'OK'));
+
+    } catch (error) {
+        console.error('Error en handleGetSinglePet:', error);
+        socket.write(buildTransaction(SERVICE_NAME, 'error;MASGE;Error interno del servidor', 'NK'));
+    }
+}
 
 module.exports = {
-    createPet,
-    listPets,
-    updatePet,
-    deletePet,
+    handleCreatePet,
+    handleListPets,
+    handleUpdatePet,
+    handleDeletePet,
+    handleGetSinglePet
 };

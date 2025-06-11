@@ -1,113 +1,162 @@
-# Proyecto Peluquería de Mascotas - Arquitectura de Software
+Sistema de Gestión para Peluquería de Mascotas
+==============================================
 
-Este repositorio contiene el proyecto para el curso de Arquitectura de Software, enfocado en el desarrollo de un sistema de gestión para una peluquería de mascotas. El sistema implementa una Arquitectura Orientada a Servicios (SOA) y utiliza el stack MERN (PostgreSQL, Express.js, React, Node.js).
+Este proyecto es un sistema de gestión integral para una peluquería de mascotas, desarrollado como parte del curso de Arquitectura de Software. Implementa una **Arquitectura Orientada a Servicios (SOA)** donde múltiples componentes independientes se comunican a través de un bus de mensajería.
 
-## Descripción General del Sistema
+Arquitectura del Sistema
+------------------------
 
-El sistema permitirá a los clientes agendar citas, consultar servicios y productos, y realizar compras. Los empleados podrán gestionar la agenda y consultar historiales, mientras que los administradores tendrán control sobre el inventario y otras configuraciones del sistema.
+El sistema está diseñado con una arquitectura de microservicios que se comunican de forma asíncrona. Los componentes principales son:
 
-## Arquitectura
+*   **Capa de Servicios (Backend):** Compuesta por 8 microservicios independientes, cada uno con una responsabilidad única (gestión de clientes, citas, catálogos, etc.).
+    
+*   **Capa de Clientes (Frontend):** Compuesta por 3 clientes distintos (para usuarios, empleados y administradores) que consumen los servicios del backend.
+    
+*   **Bus de Transacciones:** Un intermediario para gestionar la comunicación entre clientes y servicios.
+    
 
-El sistema sigue una **Arquitectura Orientada a Servicios (SOA)**. Las funcionalidades de negocio están encapsuladas en servicios backend independientes. La comunicación entre los componentes cliente y los servicios se realiza a través de un **Bus de Servicios** provisto, utilizando un formato de transacción específico (`NNNNNSSSSSDATOS`).
+Tecnologías Utilizadas
+----------------------
 
-*   **Clientes (React):** Interfaces de usuario para diferentes roles (C1: Usuarios, C2: Empleados, C3: Administradores).
-*   **Servicios (Node.js/Express.js):** Lógica de negocio backend (S1: Gestión de Citas, S2: Gestión de Clientes, etc.).
-*   **Base de Datos (PostgreSQL):** Almacenamiento de datos.
-*   **Bus de Servicios:** Canal de comunicación entre clientes y servicios.
-
-## Stack Tecnológico
-
+*   **Backend:** Node.js
+    
 *   **Base de Datos:** PostgreSQL
-*   **Backend (Servicios):** Node.js, Express.js
-*   **Frontend (Clientes):** React (utilizando Vite para la creación de proyectos)
-*   **Lenguaje Principal:** JavaScript (con opción a TypeScript)
+    
+*   **Cliente de Consola (C1):** Node.js con inquirer para la interactividad.
+    
+*   **Clientes Web (C2, C3):** Estructura base preparada para React y Vite.
+    
+*   **Autenticación:** JSON Web Tokens (JWT)
+    
+*   **Seguridad:** Hasheo de contraseñas con bcryptjs.
+    
 
-## Estructura de Directorios
+Estructura del Repositorio
+--------------------------
 
-El proyecto está organizado de la siguiente manera:
+El proyecto está organizado en una estructura de monorepo con los siguientes directorios principales:
+```
+├── bus_service_helpers/  # Lógica común para el formato de transacciones
+├── clients/              # Contiene los diferentes clientes (C1, C2, C3)
+│   ├── c1_cliente_web_usuarios/
+│   ├── c2_interfaz_empleados/
+│   └── c3_interfaz_administrador/
+├── database/             # Scripts SQL para la creación de esquemas y migraciones
+├── services/             # Contiene los microservicios del backend (S1 a S8)
+│   ├── s1_gestion_citas/
+│   └── s2_gestion_clientes/
+└── README.md
+```
+Guía de Instalación y Puesta en Marcha
+--------------------------------------
 
-*   `proyecto-peluqueria-mern/`
-    *   `bus_service_helpers/`: Funciones helper en JavaScript para construir y parsear las transacciones del Bus de Servicios.
-    *   `services/`: Contiene un subdirectorio para cada servicio backend (S1-S8). Cada servicio es una aplicación Node.js/Express independiente.
-        *   `sX_nombre_servicio/`:
-            *   `server.js`: Punto de entrada del servicio.
-            *   `controllers/`: Lógica de negocio para las transacciones.
-            *   `models/`: Esquemas de Mongoose para PostgreSQL.
-            *   `package.json`: Dependencias del servicio.
-    *   `clients/`: Contiene un subdirectorio para cada aplicación cliente React (C1-C3).
-        *   `cX_nombre_cliente/`:
-            *   `src/`: Código fuente de la aplicación React.
-            *   `package.json`: Dependencias del cliente.
-    *   `database/`: Scripts de configuración de base de datos, seeds, y diseño del esquema de PostgreSQL.
-    *   `docs/`: Documentación del proyecto, incluyendo la definición de las transacciones del bus (`SSSSS` y formato de `DATOS`) para cada servicio.
-    *   `docker-compose.yml`: (Opcional) Para orquestar el entorno de desarrollo con Docker.
-    *   `.gitignore`: Especifica los archivos y directorios ignorados por Git.
-    *   `README.md`: Este archivo.
+Sigue estos pasos para configurar y ejecutar el entorno de desarrollo local.
 
-## Prerrequisitos
+### 1\. Prerrequisitos
 
-*   Node.js (se recomienda una versión >= 18.18.0 o >= 20.9.0, verificar dependencias)
-*   npm (generalmente viene con Node.js)
-*   PostgreSQL (instalado localmente o accesible)
-*   Docker (para ejecutar el Bus de Servicios provisto)
+*   **Node.js:** Versión 18.x o superior.
+    
+*   **PostgreSQL:** Una instancia de PostgreSQL en ejecución.
+    
+*   **Git:** Para clonar el repositorio.
+    
 
-## Configuración y Ejecución
+### 2\. Clonar el Repositorio
+```Bash
 
-1.  **Clonar el Repositorio:**
-    ```bash
-    git clone <URL_DEL_REPOSITORIO>
-    cd proyecto-peluqueria-mern
-    ```
+git clone https://github.com/diegopastrian/PeluqueriaMascotas.git
+cd PeluqueriaMascotas
+```
+### 3\. Configuración de la Base de Datos
 
-2.  **Ejecutar el Bus de Servicios (Docker):**
-    ```bash
-    docker run -d -p 5000:5000 jrgiadach/soabus:v1
-    ```
-    Verificar que esté corriendo en `localhost:5000`.
+1.  Crea una nueva base de datos en tu instancia de PostgreSQL. Por ejemplo, peluqueria\_db.
+    
+2.  Ejecuta el script de creación de esquemas para generar todas las tablas necesarias, que se encuentra en database/migrations/create\_schema.sql.
+    
+### 4\. Instalación de Dependencias
 
-3.  **Instalar Dependencias (para cada servicio y cliente):**
-    Navegar a cada directorio de servicio (ej. `services/s1_gestion_citas/`) y ejecutar:
-    ```bash
-    npm install
-    ```
-    Hacer lo mismo para cada directorio de cliente (ej. `clients/c1_cliente_web_usuarios/`):
-    ```bash
-    npm install
-    ```
-    Y para `bus_service_helpers/`:
-    ```bash
-    npm install # Si tuviera dependencias, aunque inicialmente solo es un helper.
-    ```
+Cada servicio y cliente tiene sus propias dependencias. Debes instalarlas en cada directorio por separado.
 
-4.  **Configurar Variables de Entorno:**
-    Cada servicio podría requerir variables de entorno (ej. URI de conexión a PostgreSQL, puerto del servicio). Crear archivos `.env` según sea necesario (y asegurarse de que `.env` esté en `.gitignore`).
+```Bash
+# Ejemplo para el servicio S2
+cd services/s2_gestion_clientes
+npm install
 
-5.  **Ejecutar los Servicios Backend:**
-    Navegar a cada directorio de servicio y ejecutar su script de inicio (ej. `npm start` o `npm run dev` si se usa `nodemon`):
-    ```bash
-    cd services/s1_gestion_citas
-    npm run dev # o npm start
-    ```
-    Repetir para todos los servicios que se quieran probar.
+# Ejemplo para el cliente C1
+cd clients/c1_cliente_web_usuarios
+npm install
+```
 
-6.  **Ejecutar las Aplicaciones Cliente:**
-    Navegar a cada directorio de cliente y ejecutar su script de inicio:
-    ```bash
-    cd clients/c1_cliente_web_usuarios
-    npm run dev # o npm start
-    ```
-    Acceder a la aplicación cliente en el puerto indicado (generalmente `localhost:5173` para Vite o `localhost:3000` para CRA).
+_Repite este proceso para cada componente que desees ejecutar._
 
-## Documentación Adicional
+### 5\. Ejecución del Sistema
+1. \# Levantar el bus con el Docker
+2.  \# Terminal de servicio
+   ```
+    cd services/nombre_Servicio
+    node server.js
+   ```
+    
+3.  \# Terminal de Cliente
+```
+cd clients/nombre_cliente
+node app.js
+```   
 
-*   **Definición de Transacciones del Bus:** Ver `docs/api_definitions/`.
-*   **Diagrama de Arquitectura:** Ver `docs/architecture.md`.
+Componentes del Sistema
+-----------------------
 
-## Contribuidores
+#### Clientes
 
-*   Diego Pastrián
-*   Robinson Garcia
-*   Sebastián Espinoza
-*   Lucas Araya
+*   **\[C1\] Cliente de Consola para Usuarios:** Permite a los usuarios registrarse, iniciar sesión y gestionar sus mascotas y preferencias. 
+    
+*   **\[C2\] Interfaz Web para Empleados:** Permitirá a los empleados gestionar citas, registrar ventas y consultar inventario. 
+    
+*   **\[C3\] Interfaz Web para Administradores:** Permitirá a los administradores gestionar catálogos, inventario y ver reportes. 
+    
 
----
+#### Servicios
+
+*   **\[S1\] Gestión de Citas (CITAS):** Gestiona la creación, cancelación y listado de citas.
+    
+*   **\[S2\] Gestión de Clientes (CLIEN):** Responsable de la autenticación, perfiles, mascotas y preferencias de los usuarios. 
+    
+*   **\[S3\] Historial de Mascotas (HIMAS):** Registra y consulta el historial de visitas y compras por mascota. 
+    
+*   **\[S4\] Notificaciones (NOTIF):** Envía notificaciones a los usuarios. 
+    
+*   **\[S5\] Órdenes de Compra (ORCOM):** Gestiona las órdenes de compra generadas por ventas. 
+    
+*   **\[S6\] Generación de Comprobantes (GECOM):** Genera boletas o facturas de las ventas. 
+    
+*   **\[S7\] Catálogos y Precios (CATAL):** Provee la lista y detalles de productos y servicios. 
+    
+*   **\[S8\] Gestión de Inventario (INVEN):** Administra el stock de los productos. 
+    
+
+Protocolo de Comunicación
+-------------------------
+
+La comunicación en el bus utiliza una trama personalizada para todas las solicitudes y respuestas.
+
+*   **Formato:** NNNNNSSSSS DATOS
+    
+    *   **NNNNN (5 chars):** Largo del contenido (SSSSS + DATOS), rellenado con ceros.
+        
+    *   **SSSSS (5 chars):** Nombre del servicio de destino.
+        
+    *   **DATOS (string):** Payload de la transacción, usualmente con formato operacion;param1;param2;....
+        
+*   **Helper:** Las funciones para construir estas tramas se encuentran en bus\_service\_helpers/transactionHelper.js.
+    
+
+Autores
+-------
+
+*   Lucas Nicolás Araya Tapia
+    
+*   Robinson Osmar Garcia Hidalgo
+    
+*   Sebastián Ignacio Espinoza Tapia
+    
+*   Diego Jaime Pastrián Marquéz
