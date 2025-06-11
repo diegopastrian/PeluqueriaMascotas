@@ -35,7 +35,7 @@ Estructura del Repositorio
 --------------------------
 
 El proyecto está organizado en una estructura de monorepo con los siguientes directorios principales:
-`
+```
 ├── bus_service_helpers/  # Lógica común para el formato de transacciones
 ├── clients/              # Contiene los diferentes clientes (C1, C2, C3)
 │   ├── c1_cliente_web_usuarios/
@@ -46,7 +46,7 @@ El proyecto está organizado en una estructura de monorepo con los siguientes di
 │   ├── s1_gestion_citas/
 │   └── s2_gestion_clientes/
 └── README.md
-`
+```
 Guía de Instalación y Puesta en Marcha
 --------------------------------------
 
@@ -62,12 +62,11 @@ Sigue estos pasos para configurar y ejecutar el entorno de desarrollo local.
     
 
 ### 2\. Clonar el Repositorio
-`
-Bash
+```Bash
 
 git clone https://github.com/diegopastrian/PeluqueriaMascotas.git
 cd PeluqueriaMascotas
-`
+```
 ### 3\. Configuración de la Base de Datos
 
 1.  Crea una nueva base de datos en tu instancia de PostgreSQL. Por ejemplo, peluqueria\_db.
@@ -78,14 +77,15 @@ cd PeluqueriaMascotas
 
 Cada servicio y cliente tiene sus propias dependencias. Debes instalarlas en cada directorio por separado.
 
-`Bash
+```Bash
 # Ejemplo para el servicio S2
 cd services/s2_gestion_clientes
 npm install
 
 # Ejemplo para el cliente C1
 cd clients/c1_cliente_web_usuarios
-npm install`
+npm install
+```
 
 _Repite este proceso para cada componente que desees ejecutar._
 
