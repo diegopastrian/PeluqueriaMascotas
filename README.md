@@ -1,5 +1,3 @@
-¡Por supuesto! Aquí tienes la documentación completa del proyecto en un solo bloque de Markdown (.md), listo para que lo copies y pegues directamente en el archivo README.md de tu repositorio en GitHub.
-
 Sistema de Gestión para Peluquería de Mascotas
 ==============================================
 
