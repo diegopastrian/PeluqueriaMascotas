@@ -70,6 +70,9 @@ serviceSocketToBus.on('data', async (data) => {
                 case 'login':
                     authHandler.handleLogin(fields, serviceSocketToBus);
                     break;
+                case 'registrar_empleado':
+                    authHandler.handleRegister_employee(fields, serviceSocketToBus);
+                    break;                    
                 // preferencias
                 case 'PREFG': //CAMBIAR EL NOMBNRE 
                     preferenceHandler.handleSavePreference(fields, serviceSocketToBus);
