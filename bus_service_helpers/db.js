@@ -3,8 +3,9 @@
 const { Pool } = require('pg');
 const path = require('path');
 
-// Cargamos las variables de entorno globales del proyecto
-require('dotenv').config({ path: path.resolve(__dirname, './../.env.global') });
+// Cargamos las variables de entorno globales del proyecto  
+//NOTA: Aasegurese de crear el archivo .env.glboal en la carpeta raiz
+require('dotenv').config({ path: path.resolve(__dirname, '../../.env.global') });
 
 // Verificamos que la variable de la base de datos se cargó
 if (!process.env.DB_DATABASE) {

@@ -6,24 +6,65 @@ async function showMainMenu(isAuthenticated) {
       { name: 'Ajustar Stock', value: 'adjustStock' },
       { name: 'Agregar Producto al Stock', value: 'addStock' },
       { name: 'Consultar Stock', value: 'queryStock' },
-      { name: 'Cerrar Sesion', value: 'logout' },
-      { name: 'Consultar Calendario', value: 'Calendario' },
-      { name: 'Registrar Disponibilidad', value: 'Disponibilidad' },
-      { name: 'Registro de venta', value: 'Rdeventa' }
+      { name: 'Consulta de Clientes y Mascotas', value: 'clientAndPets' },
+      { name: 'Gestión de Citas', value: 'appointments' },
+      { name: 'Cerrar Sesión', value: 'logout' },
     ] : [
-      { name: 'Registrarse como empelado', value: 'register' },
-      { name: 'Iniciar Sesion', value: 'login' }
+      { name: 'Registrarse como empleado', value: 'register' },
+      { name: 'Iniciar Sesión', value: 'login' },
     ]),
-    { name: 'Salir', value: 'exit' }
+    { name: 'Salir', value: 'exit' },
   ];
 
   const { action } = await inquirer.prompt([
     {
       type: 'list',
       name: 'action',
-      message: 'Bienvenido al Panel de Administracion. Seleccione una opcion:',
-      choices
-    }
+      message: 'Bienvenido al Panel de Empleados. Seleccione una opción:',
+      choices,
+    },
+  ]);
+
+  return action;
+}
+
+async function showClientAndPetsMenu() {
+  const choices = [
+    { name: 'Listar Clientes', value: 'listClients' },
+    { name: 'Listar Mascotas de un Cliente', value: 'listClientPets' },
+    { name: 'Volver al Menú Principal', value: 'back' },
+  ];
+
+  const { action } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'action',
+      message: 'Consulta de Clientes y Mascotas. Seleccione una opción:',
+      choices,
+    },
+  ]);
+
+  return action;
+}
+
+async function showAppointmentsMenu() {
+  const choices = [
+    { name: 'Consultar Horarios Disponibles', value: 'getAvailableSlots' },
+    { name: 'Ver Mi Agenda de Citas', value: 'viewAgenda' },
+   // { name: 'Crear Cita', value: 'createAppointment' },
+   // { name: 'Modificar Cita', value: 'modifyAppointment' },
+   // { name: 'Cancelar Cita (Cliente)', value: 'cancelClientAppointment' },
+    { name: 'Listar Citas de un Cliente', value: 'listClientAppointments' },
+    { name: 'Volver al Menú Principal', value: 'back' },
+  ];
+
+  const { action } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'action',
+      message: 'Gestión de Citas. Seleccione una opción:',
+      choices,
+    },
   ]);
 
   return action;
@@ -35,40 +76,40 @@ async function promptRegisterEmployee() {
       type: 'input',
       name: 'nombre',
       message: 'Nombre del empleado:',
-      validate: (input) => input.trim() ? true : 'El nombre es obligatorio'
+      validate: (input) => input.trim() ? true : 'El nombre es obligatorio',
     },
     {
       type: 'input',
       name: 'apellido',
       message: 'Apellido del empleado:',
-      validate: (input) => input.trim() ? true : 'El apellido es obligatorio'
+      validate: (input) => input.trim() ? true : 'El apellido es obligatorio',
     },
     {
       type: 'input',
       name: 'email',
-      message: 'Correo electronico:',
-      validate: (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input) ? true : 'Ingrese un correo valido'
+      message: 'Correo electrónico:',
+      validate: (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input) ? true : 'Ingrese un correo válido',
     },
     {
       type: 'password',
       name: 'password',
       message: 'Contraseña:',
       mask: '*',
-      validate: (input) => input.length >= 6 ? true : 'La contraseña debe tener al menos 6 caracteres'
+      validate: (input) => input.length >= 6 ? true : 'La contraseña debe tener al menos 6 caracteres',
     },
     {
       type: 'input',
       name: 'telefono',
-      message: 'Telefono:',
-      validate: (input) => /^\d{9}$/.test(input) ? true : 'Ingrese un telefono valido de 9 digitos'
+      message: 'Teléfono:',
+      validate: (input) => /^\d{9}$/.test(input) ? true : 'Ingrese un teléfono válido de 9 dígitos',
     },
     {
       type: 'list',
       name: 'rol',
       message: 'Rol del empleado:',
       choices: ['administrador', 'veterinario', 'recepcionista'],
-      default: 'veterinario'
-    }
+      default: 'veterinario',
+    },
   ]);
 }
 
@@ -77,16 +118,16 @@ async function promptLoginEmployee() {
     {
       type: 'input',
       name: 'email',
-      message: 'Correo electronico:',
-      validate: (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input) ? true : 'Ingrese un correo valido'
+      message: 'Correo electrónico:',
+      validate: (input) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(input) ? true : 'Ingrese un correo válido',
     },
     {
       type: 'password',
       name: 'password',
       message: 'Contraseña:',
       mask: '*',
-      validate: (input) => input.trim() ? true : 'La contraseña es obligatoria'
-    }
+      validate: (input) => input.trim() ? true : 'La contraseña es obligatoria',
+    },
   ]);
 }
 
@@ -96,20 +137,20 @@ async function promptAdjustStock() {
       type: 'input',
       name: 'productId',
       message: 'ID del producto:',
-      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del producto debe ser un numero'
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del producto debe ser un número',
     },
     {
       type: 'input',
       name: 'quantity',
       message: 'Cantidad a ajustar (positiva o negativa):',
-      validate: (input) => /^-?\d+$/.test(input) ? true : 'La cantidad debe ser un numero'
+      validate: (input) => /^-?\d+$/.test(input) ? true : 'La cantidad debe ser un número',
     },
     {
       type: 'input',
       name: 'motivo',
       message: 'Motivo:',
-      validate: (input) => input.trim() ? true : 'Escriba el motivo'
-    }
+      validate: (input) => input.trim() ? true : 'Escriba el motivo',
+    },
   ]);
 }
 
@@ -119,32 +160,32 @@ async function promptAddStock() {
       type: 'input',
       name: 'productName',
       message: 'Nombre del producto:',
-      validate: (input) => input.trim() ? true : 'El nombre del producto es obligatorio'
+      validate: (input) => input.trim() ? true : 'El nombre del producto es obligatorio',
     },
     {
       type: 'input',
       name: 'desc',
-      message: 'Descripcion del producto:',
-      validate: (input) => input.trim() ? true : 'El nombre del producto es obligatorio'
+      message: 'Descripción del producto:',
+      validate: (input) => input.trim() ? true : 'La descripción del producto es obligatoria',
     },
     {
       type: 'input',
       name: 'precio_costo',
       message: 'Precio costo por unidad:',
-      validate: (input) => /^\d+$/.test(input) && parseInt(input) > 0 ? true : 'La cantidad debe ser un numero positivo'
+      validate: (input) => /^\d+$/.test(input) && parseInt(input) > 0 ? true : 'El precio debe ser un número positivo',
     },
     {
       type: 'input',
       name: 'precioventa',
       message: 'Precio venta por unidad:',
-      validate: (input) => /^\d+$/.test(input) && parseInt(input) > 0 ? true : 'La cantidad debe ser un numero positivo'
+      validate: (input) => /^\d+$/.test(input) && parseInt(input) > 0 ? true : 'El precio debe ser un número positivo',
     },
     {
       type: 'input',
       name: 'stock_inicial',
-      message: 'Stock inical:',
-      validate: (input) => /^\d+$/.test(input) && parseInt(input) > 0 ? true : 'La cantidad debe ser un numero positivo'
-    }
+      message: 'Stock inicial:',
+      validate: (input) => /^\d+$/.test(input) && parseInt(input) > 0 ? true : 'El stock debe ser un número positivo',
+    },
   ]);
 }
 
@@ -154,16 +195,251 @@ async function promptQueryStock() {
       type: 'input',
       name: 'productId',
       message: 'ID del producto a consultar:',
-      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del producto debe ser un numero'
-    }
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del producto debe ser un número',
+    },
   ]);
+}
+
+async function promptGetAvailableSlots() {
+  return inquirer.prompt([
+    {
+      type: 'input',
+      name: 'date',
+      message: 'Fecha (YYYY-MM-DD):',
+      validate: (input) => /^\d{4}-\d{2}-\d{2}$/.test(input) ? true : 'La fecha debe tener el formato YYYY-MM-DD',
+    },
+    {
+      type: 'input',
+      name: 'idServicio',
+      message: 'ID del servicio (opcional, presione Enter para omitir):',
+      validate: (input) => !input || /^\d+$/.test(input) ? true : 'El ID del servicio debe ser un número',
+      default: '',
+    },
+  ]);
+}
+
+async function promptCreateAppointment() {
+  return inquirer.prompt([
+    {
+      type: 'input',
+      name: 'idCliente',
+      message: 'ID del cliente:',
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del cliente debe ser un número',
+    },
+    {
+      type: 'input',
+      name: 'idMascota',
+      message: 'ID de la mascota:',
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID de la mascota debe ser un número',
+    },
+    {
+      type: 'input',
+      name: 'idEmpleado',
+      message: 'ID del empleado:',
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del empleado debe ser un número',
+    },
+    {
+      type: 'input',
+      name: 'fecha',
+      message: 'Fecha y hora (YYYY-MM-DDTHH:MM):',
+      validate: (input) => /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(input) ? true : 'La fecha debe tener el formato YYYY-MM-DDTHH:MM',
+    },
+    {
+      type: 'input',
+      name: 'servicios',
+      message: 'IDs de servicios (separados por comas, ej: 1,2):',
+      validate: (input) => /^(\d+,)*\d+$/.test(input) || input.trim() === '' ? true : 'Los IDs deben ser números separados por comas',
+      default: '',
+    },
+    {
+      type: 'input',
+      name: 'comentarios',
+      message: 'Comentarios (opcional, presione Enter para omitir):',
+      default: '',
+    },
+  ]);
+}
+
+async function promptModifyAppointment() {
+  return inquirer.prompt([
+    {
+      type: 'input',
+      name: 'idCita',
+      message: 'ID de la cita:',
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID de la cita debe ser un número',
+    },
+    {
+      type: 'input',
+      name: 'idCliente',
+      message: 'ID del cliente:',
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del cliente debe ser un número',
+    },
+    {
+      type: 'input',
+      name: 'idEmpleado',
+      message: 'Nuevo ID del empleado (opcional, presione Enter para omitir):',
+      validate: (input) => !input || /^\d+$/.test(input) ? true : 'El ID del empleado debe ser un número',
+      default: '',
+    },
+    {
+      type: 'input',
+      name: 'fecha',
+      message: 'Nueva fecha y hora (YYYY-MM-DDTHH:MM, opcional, presione Enter para omitir):',
+      validate: (input) => !input || /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(input) ? true : 'La fecha debe tener el formato YYYY-MM-DDTHH:MM',
+      default: '',
+    },
+    {
+      type: 'input',
+      name: 'servicios',
+      message: 'Nuevos IDs de servicios (separados por comas, opcional, presione Enter para omitir):',
+      validate: (input) => !input || /^(\d+,)*\d+$/.test(input) ? true : 'Los IDs deben ser números separados por comas',
+      default: '',
+    },
+    {
+      type: 'input',
+      name: 'comentarios',
+      message: 'Nuevos comentarios (opcional, presione Enter para omitir):',
+      default: '',
+    },
+  ]);
+}
+
+async function promptCancelClientAppointment() {
+  return inquirer.prompt([
+    {
+      type: 'input',
+      name: 'idCita',
+      message: 'ID de la cita:',
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID de la cita debe ser un número',
+    },
+    {
+      type: 'input',
+      name: 'idCliente',
+      message: 'ID del cliente:',
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del cliente debe ser un número',
+    },
+    {
+      type: 'input',
+      name: 'motivo',
+      message: 'Motivo de cancelación:',
+      validate: (input) => input.trim() ? true : 'Escriba el motivo',
+    },
+  ]);
+}
+
+async function promptListClientAppointments() {
+  return inquirer.prompt([
+    {
+      type: 'input',
+      name: 'idCliente',
+      message: 'ID del cliente:',
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del cliente debe ser un número',
+    },
+    {
+      type: 'list',
+      name: 'estadoFiltro',
+      message: 'Filtro por estado (opcional):',
+      choices: [
+        { name: 'Sin filtro', value: '' },
+        { name: 'Pendiente', value: 'pendiente' },
+        { name: 'Modificada', value: 'modificada' },
+        { name: 'Cancelada', value: 'cancelada' },
+        { name: 'Confirmada', value: 'confirmada' },
+      ],
+      default: '',
+    },
+  ]);
+}
+
+async function promptListClients() {
+  return {};
+}
+
+async function promptListClientPets() {
+  return inquirer.prompt([
+    {
+      type: 'input',
+      name: 'idCliente',
+      message: 'ID del cliente:',
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del cliente debe ser un número',
+    },
+  ]);
+}
+
+async function promptAgendaAction(citas) {
+  const choices = citas.map(cita => ({
+    name: `Cita ID: ${cita.id_cita} - ${cita.cliente} (${cita.mascota}) a las ${cita.fecha_hora.substring(0, 16)} [${cita.estado}]`,
+    value: cita.id_cita,
+  }));
+
+  const { idCita } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'idCita',
+      message: 'Seleccione una cita para actuar:',
+      choices: [...choices, { name: 'Volver', value: 'back' }],
+    },
+  ]);
+
+  if (idCita === 'back') return { action: 'back' };
+
+  const { action } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'action',
+      message: `Acción para la cita ID ${idCita}:`,
+      choices: [
+        { name: 'Confirmar', value: 'confirm' },
+        { name: 'Cancelar', value: 'cancel' },
+        { name: 'Volver', value: 'back' },
+      ],
+    },
+  ]);
+
+  if (action === 'back') return { action: 'back' };
+
+  if (action === 'cancel') {
+    const { motivo, motivoOtro } = await inquirer.prompt([
+      {
+        type: 'list',
+        name: 'motivo',
+        message: 'Motivo de cancelación:',
+        choices: [
+          'Falta de disponibilidad del empleado',
+          'Cierre temporal de la clínica',
+          'Otro',
+        ],
+      },
+      {
+        type: 'input',
+        name: 'motivoOtro',
+        message: 'Especifique el motivo:',
+        when: (answers) => answers.motivo === 'Otro',
+        validate: (input) => input.trim() ? true : 'Escriba el motivo',
+      },
+    ]);
+
+    return { action: 'cancel', idCita, motivo: motivo === 'Otro' ? motivoOtro : motivo };
+  }
+
+  return { action: 'confirm', idCita };
 }
 
 module.exports = {
   showMainMenu,
+  showClientAndPetsMenu,
+  showAppointmentsMenu,
   promptRegisterEmployee,
   promptLoginEmployee,
   promptAdjustStock,
   promptAddStock,
-  promptQueryStock
+  promptQueryStock,
+  promptGetAvailableSlots,
+  promptCreateAppointment,
+  promptModifyAppointment,
+  promptCancelClientAppointment,
+  promptListClientAppointments,
+  promptListClients,
+  promptListClientPets,
+  promptAgendaAction,
 };
