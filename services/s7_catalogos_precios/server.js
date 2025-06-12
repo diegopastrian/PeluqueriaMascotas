@@ -71,7 +71,6 @@ function setupHealthCheck() {
     });
 
     healthApp.listen(HEALTH_PORT, () => {
-        console.log(`[${config.SERVICE_NAME_CODE}] Health check server running on port ${HEALTH_PORT}`);
     });
 }
 
@@ -106,15 +105,12 @@ function setupGracefulShutdown() {
 // Función principal de inicialización
 function startService() {
     try {
-        console.log(`[${config.SERVICE_NAME_CODE}] Iniciando ${config.SERVICE_CODE}...`);
 
         // Inicializar componentes
         initializeComponents();
-        console.log(`[${config.SERVICE_NAME_CODE}] Componentes inicializados`);
 
         // Configurar manejadores del socket
         setupSocketHandlers();
-        console.log(`[${config.SERVICE_NAME_CODE}] Manejadores de socket configurados`);
 
         // Configurar health check
         setupHealthCheck();
@@ -123,7 +119,6 @@ function startService() {
         setupGracefulShutdown();
 
         // Conectar al bus
-        console.log(`[${config.SERVICE_NAME_CODE}] Conectando al bus en ${config.BUS_HOST}:${config.BUS_PORT}...`);
         connectToBus();
 
     } catch (error) {

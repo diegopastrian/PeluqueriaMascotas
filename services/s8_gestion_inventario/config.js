@@ -1,5 +1,5 @@
 const SERVICE_CODE = 'INVEN';
-const SERVICE_NAME_CODE = 'INVENTORY';
+const SERVICE_NAME_CODE = 'INVEN'; // Es inventory pero se usa 'INVEN' para mantener consistencia con otros servicios con el SSSSS 
 const BUS_HOST = 'localhost';
 const BUS_PORT = 5000;
 const HEALTH_PORT = 3002;

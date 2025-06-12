@@ -14,13 +14,13 @@ const services = [
         name: 'S7-Catálogo',
         path: './services/s7_catalogos_precios',
         color: '\x1b[35m', // Color magenta para los logs
+    },
+    {
+        name: 'S8-Inventario',
+        path: './services/s8_gestion_inventario',
+        color: '\x1b[32m', // Color magenta para los logs
     }
-    // Puedes agregar más servicios aquí en el futuro
-    // {
-    //     name: 'S1-Citas',
-    //     path: './services/s1_gestion_citas',
-    //     color: '\x1b[33m', // Color amarillo
-    // }
+    
 ];
 
 // Función para iniciar un servicio

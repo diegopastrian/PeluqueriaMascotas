@@ -4,7 +4,6 @@ const { handleOperation } = require('./operations');
 const { startHealthCheck } = require('./healthCheck');
 const { SERVICE_NAME_CODE } = require('./config');
 
-console.log(`[${SERVICE_NAME_CODE}] Iniciando servicio...`);
 
 connectToBus((error) => {
     if (error) {

@@ -7,7 +7,6 @@ function startHealthCheck() {
         res.status(200).send(`${SERVICE_NAME_CODE} service is active and connected to bus.`);
     });
     healthApp.listen(HEALTH_PORT, () => {
-        console.log(`[${SERVICE_NAME_CODE}] Health check disponible en http://localhost:${HEALTH_PORT}/health`);
     });
 }
 

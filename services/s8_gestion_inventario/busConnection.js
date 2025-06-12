@@ -6,16 +6,14 @@ const serviceSocketToBus = new net.Socket();
 
 function sendSinit(callback) {
     const sinitTransaction = buildTransaction('sinit', SERVICE_CODE);
-    console.log(`[${SERVICE_NAME_CODE}] Enviando transaccion de activacion: ${sinitTransaction}`);
     serviceSocketToBus.write(sinitTransaction);
 
     const onData = (data) => {
         const response = data.toString();
-        console.log(`[${SERVICE_NAME_CODE}] Respuesta SINIT recibida: ${response}`);
         try {
             const parsed = parseResponse(response);
             if (parsed.serviceName === 'sinit' && parsed.status === 'OK') {
-                console.log(`[${SERVICE_NAME_CODE}] Servicio ${SERVICE_CODE} activado correctamente`);
+                console.log(`[${SERVICE_NAME_CODE}] Servicio listo para procesar transacciones.`);
                 serviceSocketToBus.removeListener('data', onData);
                 callback(null);
             } else {
@@ -35,7 +33,6 @@ function sendSinit(callback) {
 
 function connectToBus(callback) {
     serviceSocketToBus.connect(BUS_PORT, BUS_HOST, () => {
-        console.log(`[${SERVICE_NAME_CODE}] Conectado al Bus en ${BUS_HOST}:${BUS_PORT}`);
         sendSinit((error) => {
             if (error) {
                 console.error(`[${SERVICE_NAME_CODE}] Error durante la activacion: ${error.message}`);
@@ -43,7 +40,6 @@ function connectToBus(callback) {
                 callback(error);
                 return;
             }
-            console.log(`[${SERVICE_NAME_CODE}] Listo para procesar transacciones`);
             callback(null);
         });
     });

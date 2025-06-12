@@ -2,7 +2,7 @@
 
 const bcrypt = require('bcrypt');
 const jwt = require('jsonwebtoken');
-const {pool} = require('../db'); // Asume que db.js esta en el directorio raiz del servicio
+const pool = require('../../../bus_service_helpers/db'); // no cambiear esta ruta, ahí esta la conexión a la base de datos
 const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper'); // Ajusta esta ruta si tu estructura es diferente
 const { SERVICE_CODE, SERVICE_NAME_CODE, SECRET_KEY } = require('../config');
 

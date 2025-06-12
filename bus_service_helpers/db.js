@@ -5,7 +5,7 @@ const path = require('path');
 
 // Cargamos las variables de entorno globales del proyecto  
 //NOTA: Aasegurese de crear el archivo .env.glboal en la carpeta raiz
-require('dotenv').config({ path: path.resolve(__dirname, '../../.env.global') });
+require('dotenv').config({ path: path.resolve(__dirname, '../.env.global') });
 
 // Verificamos que la variable de la base de datos se cargó
 if (!process.env.DB_DATABASE) {
@@ -15,11 +15,10 @@ if (!process.env.DB_DATABASE) {
 const pool = new Pool({
     user: process.env.DB_USER,
     host: process.env.DB_HOST,
-    database: process.env.DB_DATABASE, // <-- CORRECCIÓN CLAVE: de DB_NAME a DB_DATABASE
+    database: process.env.DB_DATABASE,
     password: process.env.DB_PASSWORD,
     port: process.env.DB_PORT,
 });
 
-console.log(`Pool de DB configurada para conectar a la base de datos: "${process.env.DB_DATABASE}"`);
 
 module.exports = pool;
