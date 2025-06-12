@@ -1,19 +1,13 @@
 {
   "name": "s3_historial_mascotas",
   "version": "1.0.0",
-  "description": "",
-  "main": "index.js",
+  "description": "Servicio para gestionar el historial de servicios de las mascotas.",
+  "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "start": "node server.js"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
   "dependencies": {
-    "express": "^5.1.0",
-    "mongoose": "^8.15.1"
-  },
-  "devDependencies": {
-    "nodemon": "^3.1.10"
+    "express": "^4.19.2",
+    "jsonwebtoken": "^9.0.2"
   }
 }

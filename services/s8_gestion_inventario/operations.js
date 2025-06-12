@@ -1,4 +1,4 @@
-const pool = require('./db');
+const pool = require('../../bus_service_helpers/db');
 const { buildTransaction, parseResponse } = require('../../bus_service_helpers/transactionHelper');
 const { verifyToken } = require('./auth');
 const { SERVICE_CODE, SERVICE_NAME_CODE } = require('./config');

@@ -1,6 +1,6 @@
 const net = require('net');
-const { buildTransaction, parseResponse } = require('../../bus_service_helpers/transactionHelper');
-const pool = require('./db');
+const { buildTransaction, parseResponse } = require('../../../bus_service_helpers/transactionHelper');
+const pool = require('../../../bus_service_helpers/db'); // Apunta al db.js central
 const { registerUser, loginUser } = require('./auth_auxx.js');
 require('dotenv').config();
 

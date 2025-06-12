@@ -1,7 +1,7 @@
 const bcrypt = require('bcrypt');
-const pool = require('./db');
+const pool = require('../../../bus_service_helpers/db'); // Apunta al db.js central
 const jwt = require('jsonwebtoken');
-const { buildTransaction } = require('../../bus_service_helpers/transactionHelper');
+const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper');
 require('dotenv').config();
 
 const SERVICE_CODE = 'AUTEM';
