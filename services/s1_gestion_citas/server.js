@@ -81,6 +81,8 @@ serviceSocketToBus.on('data', async (data) => {
       console.log(`[${config.service.name}] Procesando operación: ${operation} con datos: ${parsed.data}`);
 
       switch (operation) {
+//todo lo encapsulado son operaciones pra clientes, lo demas es para empleados, para tenerlo en cuenta para c1
+  //=============================================
         case 'horarios':
           responseData = await handleHorarios(fields);
           break;
@@ -93,11 +95,12 @@ serviceSocketToBus.on('data', async (data) => {
         case 'cancelar':
           responseData = await handleCancelar(fields);
           break;
-        case 'cancelarEmp':
-          responseData = await handleCancelarEmp(fields);
-          break;
         case 'listar':
           responseData = await handleListar(fields);
+          break;
+   //=======================================       
+        case 'cancelarEmp':
+          responseData = await handleCancelarEmp(fields);
           break;
         case 'listarAgenda':
           responseData = await handleListarAgenda(fields);
