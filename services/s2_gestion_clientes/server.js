@@ -72,9 +72,6 @@ serviceSocketToBus.on('data', async (data) => {
                     break;
                 case 'registrar_empleado':
                     authHandler.handleRegister_employee(fields, serviceSocketToBus);
-                    break; 
-                case 'registrar_empleado':
-                    authHandler.handleRegister_employee(fields, serviceSocketToBus);
                     break;                    
                 // preferencias
                 case 'guardar_pref': //CAMBIAR EL NOMBNRE 
