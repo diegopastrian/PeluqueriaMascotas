@@ -7,9 +7,38 @@ const { SERVICE_CODE,  SERVICE_NAME_CODE } = require('../config');
 const jwtHelper = require('../helpers/jwtHelper');
 
 // Copiamos la logica de 'PREFG'
-function handleSavePreference(fields, socket) {
-    // ... (La logica de validacion, verificacion de token y DB es EXACTAMENTE la misma que tenias)
-    // ... copiala y pegala aqui
+async function handleSavePreference(fields, socket) {
+    try {
+        const [, token, tipo, id_referencia] = fields;
+        if (!token || !tipo || !id_referencia) {
+            return socket.write(buildTransaction(SERVICE_NAME_CODE, 'error;guardar_pref;Faltan parámetros', 'NK'));
+        }
+
+        const decoded = jwtHelper.verifyToken(token);
+        if (!decoded) {
+            return socket.write(buildTransaction(SERVICE_NAME_CODE, 'error;guardar_pref;Token inválido', 'NK'));
+        }
+
+        const { id_cliente } = decoded;
+
+        // Insertamos la nueva preferencia en la base de datos
+        await pool.query(
+            'INSERT INTO Preferencias (id_cliente, tipo, id_referencia) VALUES ($1, $2, $3)',
+            [id_cliente, tipo, id_referencia]
+        );
+
+        const responseData = 'guardar_pref;PREFERENCIA_GUARDADA';
+        console.log(`Preferencia guardada: Cliente ID ${id_cliente}, Tipo ${tipo}, Referencia ${id_referencia}`);
+        socket.write(buildTransaction(SERVICE_NAME_CODE, responseData, 'OK'));
+
+    } catch (error) {
+        // Maneja el caso de que la preferencia ya exista (error de clave única)
+        if (error.code === '23505') { // Código de error de PostgreSQL para unique_violation
+            return socket.write(buildTransaction(SERVICE_NAME_CODE, 'error;guardar_pref;Esta preferencia ya existe', 'NK'));
+        }
+        console.error('Error en handleSavePreference:', error);
+        socket.write(buildTransaction(SERVICE_NAME_CODE, 'error;guardar_pref;Error interno del servidor', 'NK'));
+    }
 }
 
 // Copiamos la logica de 'PREFL'
@@ -41,7 +70,7 @@ async function handleListPreferences(fields, socket) {
         
 
         const preferencesString = preferences.map(p => 
-            `${p.id_preferencia},${p.tipo_preferencia},${p.id_referencia}`
+            `${p.id_preferencia},${p.tipo},${p.id_referencia}`
         ).join(';');
 
         const responseData = `listar_pref;${preferencesString}`;
@@ -83,7 +112,7 @@ async function handleDeletePreference(fields, socket) {
         );
 
         if (result.rowCount === 0) {
-            return socket.write(buildTransaction(SERVICE_NAME, 'error;Preferencia no encontrada o sin permiso', 'NK'));
+            return socket.write(buildTransaction(SERVICE_NAME_CODE, 'error;Preferencia no encontrada o sin permiso', 'NK'));
         }
 
         // 4. Construimos y escribimos la respuesta de exito

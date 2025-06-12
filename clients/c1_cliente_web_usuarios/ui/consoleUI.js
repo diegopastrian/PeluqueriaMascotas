@@ -79,6 +79,34 @@ async function promptForPreferenceToDelete() {
     ]);
 }
 
+async function promptForPostListingAction() {
+    const { choice } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'choice',
+            message: '¿Qué deseas hacer ahora?',
+            choices: [
+                { name: '1. Agregar un producto a mis Preferencias', value: 'add_preference' },
+                { name: '2. Agregar un producto al Carrito de Compras', value: 'add_to_cart' },
+                new inquirer.Separator(),
+                { name: '3. Volver al menú anterior', value: 'back' },
+            ],
+        },
+    ]);
+    return choice;
+}
+
+async function promptForPreferenceId(itemType) {
+    const { id } = await inquirer.prompt([
+        {
+            type: 'input',
+            name: 'id',
+            message: `Ingresa el ID del ${itemType} que quieres agregar a tus preferencias:`,
+        },
+    ]);
+    return id;
+}
+
 // --- AUTENTICACION ---
 async function getRegistrationData() {
     console.log('\n--- Formulario de Registro ---');
@@ -219,6 +247,8 @@ module.exports = {
     promptForPetId,
     promptForLogoutConfirmation,
     showCatalogMenu,
+    promptForPostListingAction,
+    promptForPreferenceId,
     close: () => {
         console.log('Adios!')
     }
