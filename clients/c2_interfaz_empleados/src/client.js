@@ -1,162 +1,154 @@
 require('dotenv').config();
-const { showMainMenu, showClientAndPetsMenu, showAppointmentsMenu, promptRegisterEmployee, promptLoginEmployee, promptAdjustStock, promptAddStock, promptQueryStock, promptGetAvailableSlots, promptCreateAppointment, promptModifyAppointment, promptCancelClientAppointment, promptListClientAppointments, promptListClients, promptListClientPets, promptAgendaAction } = require('./ui/adminConsole');
-const { registerEmployee, loginEmployee } = require('./service/authService');
-const { adjustStock, addStock, queryStock } = require('./service/stockService');
-const { getAvailableSlots, createAppointment, modifyAppointment, cancelClientAppointment, cancelEmployeeAppointment, listClientAppointments, listEmployeeAgenda, confirmAppointment } = require('./service/citasservice');
-const { listClients, listClientPets } = require('./service/clientService');
+const {
+  showMainMenu,
+  showClientAndPetsMenu,
+  showAppointmentsMenu,
+  promptRegisterEmployee,
+  promptLoginEmployee,
+  promptAdjustStock,
+  promptAddStock,
+  promptQueryStock,
+  promptGetAvailableSlots,
+  promptCreateAppointment,
+  promptModifyAppointment,
+  promptCancelClientAppointment,
+  promptListClientAppointments,
+  promptListClients,
+  promptListClientPets,
+  promptAgendaAction,
+} = require('./ui/adminConsole');
+const { registerEmployee, loginEmployee } = require('./actions/authService');
+const { adjustStock, addStock, queryStock } = require('./actions/stockService');
+const { getAvailableSlots, createAppointment, modifyAppointment, cancelClientAppointment, cancelEmployeeAppointment, listClientAppointments, listEmployeeAgenda, confirmAppointment } = require('./actions/citasservice');
+const { listClients, listClientPets } = require('./actions/clientService');
 const { mostrarHorariosDisponibles } = require('./extras/mostrarHorariosDisponibles');
+const { verifyToken } = require('./extras/verify_token');
+
+const parseCitas = (data) =>
+  data.split(';').slice(1).map(cita => {
+    const quitarTildes = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
+    const [id_cita, ...rest] = cita.split(',').map(quitarTildes);
+    return rest.length > 3
+      ? { id_cita, cliente: rest[0], id_mascota: rest[1], mascota: rest[2], fecha_hora: rest[3].substring(0, 16), estado: rest[4], comentario: rest[5] }
+      : { id_cita, fecha: rest[0], estado: rest[1] };
+  });
+
+const handleResult = (result, displayFn = console.log) =>
+  displayFn(`✅ ${result.message}: ${result.data}`);
+
+const handleError = (error) => console.error(`❌ Error: ${error.message}`);
+
+const actions = {
+
+  //autenticacion
+  register: async () => handleResult(await registerEmployee(await promptRegisterEmployee())),
+  login: async (ctx) => {
+    const { token: newToken, id, nombre, message } = await loginEmployee(await promptLoginEmployee());
+    const verification = verifyToken(newToken);
+    if (!verification.success) throw new Error("Solo empleados pueden acceder alejate de aqui");
+    Object.assign(ctx, { token: newToken, employeeId: id, employeeName: nombre });
+    console.log(`✅ ${message}`);
+  },
+  logout: (ctx) => {
+    Object.assign(ctx, { token: '', employeeId: '', employeeName: '' });
+    console.log('✅ Sesión cerrada');
+  },
+
+  ///stockk
+  adjustStock: async ({ token }) => handleResult(await adjustStock(token, ...(Object.values(await promptAdjustStock())))),
+  addStock: async ({ token }) => handleResult(await addStock(token, ...(Object.values(await promptAddStock())))),
+  queryStock: async () => handleResult(await queryStock((await promptQueryStock()).productId)),
+  clientAndPets: async () => {
+    while (true) {
+      const subAction = await showClientAndPetsMenu();
+      if (subAction === 'back') break;
+      const subActions = {
+        listClients: async () => console.table(await listClients()),
+        listClientPets: async () => console.table(await listClientPets((await promptListClientPets()).idCliente)),
+      };
+      await subActions[subAction]?.();
+    }
+  },
+
+  //gestion citas
+  appointments: async ({ employeeId }) => {
+    while (true) {
+      const subAction = await showAppointmentsMenu();
+      if (subAction === 'back') break;
+      const subActions = {
+        getAvailableSlots: async () => {
+          const slotsData = await promptGetAvailableSlots();
+          mostrarHorariosDisponibles((await getAvailableSlots(slotsData.date, slotsData.idServicio)).data);
+        },
+        viewAgenda: async () => {
+          if (!employeeId) throw new Error('Debes iniciar sesión para ver tu agenda.');
+          const result = await listEmployeeAgenda(employeeId);
+          if (result.data === 'listarAgenda;Sin citas programadas') {
+            console.log('ℹ️ No tienes citas pendientes.');
+            return;
+          }
+          const citas = parseCitas(result.data);
+          console.table(citas);
+          while (true) {
+            const { action, idCita, motivo } = await promptAgendaAction(citas);
+            if (action === 'back') break;
+            const agendaActions = {
+              confirm: () => confirmAppointment(idCita, employeeId),
+              cancel: () => cancelEmployeeAppointment(idCita, employeeId, motivo),
+            };
+            await handleResult(await agendaActions[action]());
+          }
+        },
+        createAppointment: async () => {
+          const data = await promptCreateAppointment();
+          handleResult(await createAppointment(
+            data.idCliente,
+            data.idMascota,
+            data.idEmpleado,
+            data.fecha,
+            data.servicios ? data.servicios.split(',').map(Number) : [],
+            data.comentarios
+          ));
+        },
+        modifyAppointment: async () => {
+          const data = await promptModifyAppointment();
+          handleResult(await modifyAppointment(
+            data.idCita,
+            data.idCliente,
+            data.idEmpleado || null,
+            data.fecha || null,
+            data.servicios ? data.servicios.split(',').map(Number) : null,
+            data.comentarios || null
+          ));
+        },
+        cancelClientAppointment: async () => {
+          const data = await promptCancelClientAppointment();
+          handleResult(await cancelClientAppointment(data.idCita, data.idCliente, data.motivo));
+        },
+        listClientAppointments: async () => {
+          const data = await promptListClientAppointments();
+          handleResult(await listClientAppointments(data.idCliente, data.estadoFiltro || null), (msg) => console.table(parseCitas(msg.split(': ')[1])));
+        },
+      };
+      await subActions[subAction]?.();
+    }
+  },
+};
 
 async function main() {
-  let token = '';
-  let employeeId = '';
-  let employeeName = '';
-
+  const context = { token: '', employeeId: '', employeeName: '' };
   while (true) {
-    const isAuthenticated = !!token;
-    const action = await showMainMenu(isAuthenticated);
-
+    const action = await showMainMenu(!!context.token);
     if (action === 'exit') {
       console.log('Saliendo del sistema...');
       break;
     }
-
     try {
-      if (action === 'register') {
-        const employeeData = await promptRegisterEmployee();
-        const result = await registerEmployee(employeeData);
-        console.log(`✅ ${result.message}: ID=${result.id}, Email=${result.email}`);
-      } else if (action === 'login') {
-        const loginData = await promptLoginEmployee();
-        const result = await loginEmployee(loginData);
-        token = result.token;
-        employeeId = result.id;
-        employeeName = result.nombre;
-        console.log(`✅ ${result.message}`);
-      } else if (action === 'logout') {
-        token = '';
-        employeeId = '';
-        employeeName = '';
-        console.log('✅ Sesión cerrada');
-      } else if (action === 'adjustStock') {
-        const stockData = await promptAdjustStock();
-        const result = await adjustStock(token, stockData.productId, stockData.quantity, stockData.motivo);
-        console.log(`✅ ${result.message}: ${result.data}`);
-      } else if (action === 'addStock') {
-        const stockData = await promptAddStock();
-        const result = await addStock(token, stockData.productName, stockData.desc, stockData.precio_costo, stockData.precioventa, stockData.stock_inicial);
-        console.log(`✅ ${result.message}: ${result.data}`);
-      } else if (action === 'queryStock') {
-        const stockData = await promptQueryStock();
-        const result = await queryStock(stockData.productId);
-        console.log(`✅ ${result.message}: ${result.data}`);
-      } else if (action === 'clientAndPets') {
-        while (true) {
-          const subAction = await showClientAndPetsMenu();
-          if (subAction === 'back') break;
-
-          if (subAction === 'listClients') {
-            const clients = await listClients();
-            console.table(clients);
-          } else if (subAction === 'listClientPets') {
-            const petData = await promptListClientPets();
-            const pets = await listClientPets(petData.idCliente);
-            console.table(pets);
-          }
-        }
-      } else if (action === 'appointments') {
-        while (true) {
-          const subAction = await showAppointmentsMenu();
-          if (subAction === 'back') break;
-
-          if (subAction === 'getAvailableSlots') {
-            const slotsData = await promptGetAvailableSlots();
-            const result = await getAvailableSlots(slotsData.date, slotsData.idServicio);
-            mostrarHorariosDisponibles(result.data);
-          }else if (subAction === 'viewAgenda') {
-  if (!employeeId) {
-    console.log('❌ Debes iniciar sesión para ver tu agenda.');
-    continue;
-  }
-  const result = await listEmployeeAgenda(employeeId);
-  if (result.data === 'listarAgenda;Sin citas programadas') {
-    console.log('ℹ️ No tienes citas pendientes.');
-    continue;
-  }
-
-  const citas = result.data.split(';').slice(1).map(cita => {
-    const [id_cita, cliente, id_mascota, mascota, fecha_hora, estado, comentario] = cita.split(',');
-    return { id_cita, cliente, id_mascota, mascota, fecha_hora: fecha_hora.substring(0, 16), estado, comentario };
-  });
-
-  if (citas.length === 0) {
-    console.log('ℹ️ No tienes citas pendientes.');
-    continue;
-  }
-
-  console.table(citas);
-
-  while (true) {
-    const agendaAction = await promptAgendaAction(citas);
-    if (agendaAction.action === 'back') break;
-
-    if (agendaAction.action === 'confirm') {
-      const result = await confirmAppointment(agendaAction.idCita, employeeId);
-      console.log(`✅ ${result.message}: ${result.data}`);
-    } else if (agendaAction.action === 'cancel') {
-      const result = await cancelEmployeeAppointment(agendaAction.idCita, employeeId, agendaAction.motivo);
-      console.log(`✅ ${result.message}: ${result.data}`);
-    }
-  }
-} else if (subAction === 'createAppointment') {
-            const appointmentData = await promptCreateAppointment();
-            const result = await createAppointment(
-              appointmentData.idCliente,
-              appointmentData.idMascota,
-              appointmentData.idEmpleado,
-              appointmentData.fecha,
-              appointmentData.servicios ? appointmentData.servicios.split(',').map(Number) : [],
-              appointmentData.comentarios
-            );
-            console.log(`✅ ${result.message}: ${result.data}`);
-          } else if (subAction === 'modifyAppointment') {
-            const appointmentData = await promptModifyAppointment();
-            const result = await modifyAppointment(
-              appointmentData.idCita,
-              appointmentData.idCliente,
-              appointmentData.idEmpleado || null,
-              appointmentData.fecha || null,
-              appointmentData.servicios ? appointmentData.servicios.split(',').map(Number) : null,
-              appointmentData.comentarios || null
-            );
-            console.log(`✅ ${result.message}: ${result.data}`);
-          } else if (subAction === 'cancelClientAppointment') {
-            const appointmentData = await promptCancelClientAppointment();
-            const result = await cancelClientAppointment(
-              appointmentData.idCita,
-              appointmentData.idCliente,
-              appointmentData.motivo
-            );
-            console.log(`✅ ${result.message}: ${result.data}`);
-          } else if (subAction === 'listClientAppointments') {
-            const appointmentData = await promptListClientAppointments();
-            const result = await listClientAppointments(
-              appointmentData.idCliente,
-              appointmentData.estadoFiltro || null
-            );
-const citas = result.data.split(';').slice(1).map(cita => {
-  const quitarTildes = str => str.normalize("NFD").replace(/[\u0300-\u036f]/g, "");
-  const [id_cita, fecha, estado] = cita.split(',').map(quitarTildes);
-  return { id_cita, fecha, estado };
-});
-            console.table(citas);
-          }
-        }
-      }
+      await actions[action]?.(context);
+      await new Promise(resolve => setTimeout(resolve, 1000));
     } catch (error) {
-      console.error(`❌ Error: ${error.message}`);
+      handleError(error);
     }
-
-    await new Promise(resolve => setTimeout(resolve, 1000));
   }
 }
 
