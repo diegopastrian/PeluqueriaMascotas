@@ -10,15 +10,15 @@ let authToken = ''; // Para almacenar el token JWT despues de un login exitoso
 
 clientSocket.connect(BUS_PORT, BUS_HOST, () => {
     console.log('Cliente conectado al Bus');
-    
+    /*
     // --- FASE 1: REGISTRO (COMENTADO AHORA) ---
-/*
+
     const serviceNameForRegister = 'CLIEN'; 
     const registerData = 'registrar;Prueba;Usuario;nuevo.test@example.com;miPassword123;9988776655'; 
     const registerRequest = buildTransaction(serviceNameForRegister, registerData);
     console.log('Enviando solicitud de registro:', registerRequest);
-    clientSocket.write(registerRequest);*/
-
+    clientSocket.write(registerRequest);
+*/
 
     // --- FASE 2: LOGIN Y PRUEBA DE PREFERENCIAS (DESCOMENTADO AHORA) ---
     setTimeout(() => {
