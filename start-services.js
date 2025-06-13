@@ -18,7 +18,32 @@ const services = [
     {
         name: 'S8-Inventario',
         path: './services/s8_gestion_inventario',
-        color: '\x1b[32m', // Color magenta para los logs
+        color: '\x1b[91m', // Color verde
+    },
+    {
+        name: 'S4-Notificaciones',
+        path: './services/s4_notificaciones',
+        color: '\x1b[33m', // Color amarillo
+    },
+    {
+        name: 'S5-Ordenes',
+        path: './services/s5_ordenes_compra',
+        color: '\x1b[34m', // Color azul
+    },
+    {
+        name: 'S6-Comprobantes',
+        path: './services/s6_generacion_comprobantes',
+        color: '\x1b[96m', // Color cian claro
+    },
+    {
+        name: 'S1-Citas',
+        path: './services/s1_gestion_citas',
+        color: '\x1b[94m', // Color rojo
+    },
+    {
+        name: 'S3-Historial Mascotas',
+        path: './services/s3_historial_mascotas',
+        color: '\x1b[92m', // Color verde
     }
     
 ];

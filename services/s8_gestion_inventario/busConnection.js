@@ -9,6 +9,7 @@ function sendSinit(callback) {
     serviceSocketToBus.write(sinitTransaction);
 
     const onData = (data) => {
+        console.log(`[${SERVICE_NAME_CODE}] Recibido: ${data.toString()}`);
         const response = data.toString();
         try {
             const parsed = parseResponse(response);

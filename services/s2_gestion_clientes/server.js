@@ -2,10 +2,8 @@
 
 const net = require('net');
 const express = require('express');
-const { parseResponse, buildTransaction } = require('../../bus_service_helpers/transactionHelper'); // Ajusta la ruta si es necesario
+const { parseResponse, buildTransaction } = require('../../bus_service_helpers/transactionHelper'); 
 
-// --- 1. IMPORTACIONES CENTRALIZADAS ---
-// Importamos la configuracion y los manejadores de logica de negocio.
 const config = require('./config');
 const authHandler = require('./handlers/authHandler');
 const preferenceHandler = require('./handlers/preferenceHandler');
@@ -13,16 +11,10 @@ const petHandler = require('./handlers/petHandler');
 
 const serviceSocketToBus = new net.Socket();
 
-// --- 2. LoGICA DE CONEXIoN (se queda aqui) ---
-/**
- * Envia la transaccion SINIT al Bus para registrar el servicio y maneja la respuesta inicial.
- * @param {(err: Error | null) => void} callback - Funcion a llamar despues de la respuesta SINIT.
- */
 function sendSinit(callback) {
     const sinitTransaction = buildTransaction('sinit', config.SERVICE_CODE);
     serviceSocketToBus.write(sinitTransaction);
 
-    // Escucha la respuesta del bus solo para SINIT, una sola vez.
     serviceSocketToBus.once('data', (data) => {
         const responseStr = data.toString();
         try {
@@ -38,8 +30,6 @@ function sendSinit(callback) {
     });
 }
 
-// --- 3. LISTENER PRINCIPAL (ahora es un enrutador) ---
-// Este es el corazon del servicio, escucha continuamente los mensajes del bus.
 serviceSocketToBus.on('data', async (data) => {
     const rawData = data.toString();
     // El bus puede enviar multiples mensajes concatenados, los separamos.
@@ -48,7 +38,7 @@ serviceSocketToBus.on('data', async (data) => {
     for (const message of messages) {
         try {
             if (message.length < 10) continue; // Ignorar mensajes mal formados.
-            
+            console.log(`[${config.SERVICE_NAME_CODE}] Recibido: ${message}`);
             const parsed = parseResponse(message);
 
             // Ignorar mensajes que no son para este servicio.
@@ -131,7 +121,7 @@ healthApp.listen(config.HEALTH_PORT, () => {
 serviceSocketToBus.connect(config.BUS_PORT, config.BUS_HOST, () => {
     sendSinit((err) => {
         if (err) {
-            console.error('Fallo CRiTICO en la activacion del servicio. Terminando.', err);
+            console.error('Fallo CRITICO en la activacion del servicio. Terminando.', err);
             serviceSocketToBus.destroy();
             process.exit(1); // Salir del proceso si la activacion falla.
         } else {

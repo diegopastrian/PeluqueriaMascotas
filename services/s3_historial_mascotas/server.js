@@ -3,13 +3,12 @@ const net = require('net');
 const { buildTransaction, parseResponse } = require('../../bus_service_helpers/transactionHelper');
 const historialHandler = require('./handlers/historialHandler');
 const config = require('./config');
-
+const SERVICE_CODE = config.SERVICE_CODE;
+let isServiceReady = false;
 const serviceSocket = new net.Socket();
 
 function connectToBus() {
-    console.log(`[${config.SERVICE_NAME_CODE}] Intentando conectar al Bus en ${config.BUS_HOST}:${config.BUS_PORT}...`);
     serviceSocket.connect(config.BUS_PORT, config.BUS_HOST, () => {
-        console.log(`[${config.SERVICE_NAME_CODE}] Conectado al Bus.`);
         serviceSocket.write(buildTransaction('sinit', config.SERVICE_CODE));
     });
 }
@@ -19,7 +18,17 @@ serviceSocket.on('data', async (data) => {
     console.log(`[${config.SERVICE_NAME_CODE}] Recibido: ${rawMessage}`);
     try {
         const parsed = parseResponse(rawMessage);
-        if (parsed.serviceName !== config.SERVICE_CODE) return;
+        if (!isServiceReady) {
+            if (parsed.serviceName === 'sinit' && parsed.status === 'OK') {
+                isServiceReady = true;
+                console.log(`[${SERVICE_CODE}] Servicio listo para procesar transacciones.`);
+            } else {
+                console.error(`[${SERVICE_CODE}] Error: Fallo en la inicialización con el bus. Respuesta recibida: ${rawMessage}`);
+                serviceSocket.destroy(); // Cerramos la conexión.
+                return;
+            }
+        }
+        if (parsed.serviceName !== config.SERVICE_CODE) return; // Aseguramos que el mensaje es para este servicio
 
         const fields = parsed.data.split(';');
         const operation = fields[0];

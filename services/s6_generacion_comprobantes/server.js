@@ -2,7 +2,7 @@
 const net = require('net');
 const { buildTransaction, parseResponse } = require('../../bus_service_helpers/transactionHelper');
 const comprobanteHandler = require('./handlers/comprobanteHandler');
-
+let isServiceReady = false;
 const SERVICE_CODE = 'COMPR'; // S6
 const BUS_PORT = 5000;
 const BUS_HOST = 'localhost';
@@ -10,9 +10,7 @@ const BUS_HOST = 'localhost';
 const serviceSocket = new net.Socket();
 
 function connectToBus() {
-    console.log(`[${SERVICE_CODE}] Intentando conectar al Bus en ${BUS_HOST}:${BUS_PORT}...`);
     serviceSocket.connect(BUS_PORT, BUS_HOST, () => {
-        console.log(`[${SERVICE_CODE}] Conectado al Bus.`);
         const sinit = buildTransaction('sinit', SERVICE_CODE);
         serviceSocket.write(sinit);
     });
@@ -23,6 +21,16 @@ serviceSocket.on('data', async (data) => {
     console.log(`[${SERVICE_CODE}] Recibido: ${rawMessage}`);
     try {
         const parsed = parseResponse(rawMessage);
+        if (!isServiceReady) {
+            if (parsed.serviceName === 'sinit' && parsed.status === 'OK') {
+                isServiceReady = true;
+                console.log(`[${SERVICE_CODE}] Servicio listo para procesar transacciones.`);
+            } else {
+                console.error(`[${SERVICE_CODE}] Error: Fallo en la inicialización con el bus. Respuesta recibida: ${rawMessage}`);
+                serviceSocket.destroy(); // Cerramos la conexión.
+                return;
+            }
+        }
         if (parsed.serviceName !== SERVICE_CODE) return;
 
         const fields = parsed.data.split(';');

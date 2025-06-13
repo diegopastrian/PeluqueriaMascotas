@@ -37,6 +37,7 @@ function connectToBus() {
 // Configurar manejadores de eventos del socket
 function setupSocketHandlers() {
     serviceSocketToBus.on('data', async (data) => {
+        console.log(`[${config.SERVICE_NAME_CODE}] Recibido: ${data.toString()}`);
         await messageProcessor.processIncomingData(data, serviceSocketToBus);
     });
 

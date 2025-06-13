@@ -12,6 +12,7 @@ connectToBus((error) => {
     }
 
     serviceSocketToBus.on('data', (data) => {
+        console.log(`[${SERVICE_NAME_CODE}] Recibido: ${data.toString()}`);
         handleOperation(data.toString(), serviceSocketToBus);
     });
 
