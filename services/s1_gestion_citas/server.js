@@ -1,7 +1,7 @@
 const net = require('net');
 const { buildTransaction, parseResponse } = require('../../bus_service_helpers/transactionHelper');
 const config = require('./config.js');
-const { handleHorarios, handleCrear, handleModificar, handleCancelar, handleCancelarEmp, handleListar, handleListarAgenda, handleConfirmar } = require('./services/citas');
+const { handleHorarios, handleCrear, handleModificar, handleCancelar, handleCancelarEmp, handleListar, handleListarAgenda, handleConfirmar } = require('./handlers/citas');
 const express = require('express');
 
 const serviceSocketToBus = new net.Socket();
