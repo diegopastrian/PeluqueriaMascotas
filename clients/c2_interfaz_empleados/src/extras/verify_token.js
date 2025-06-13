@@ -4,7 +4,7 @@ const config = require('../config/busConfig');
 
 // Cargamos las variables de entorno globales del proyecto
 require('dotenv').config({ path: path.resolve(__dirname, '../../../../.env.global') });
-const allowedRolesEnv = process.env.ALLOWED_ROLES || '';
+const allowedRolesEnv = 'veterinario,administrador,recepcionista'
 const allowedRoles = allowedRolesEnv.split(',').map(r => r.trim());
 
 function verifyToken(token, roles = allowedRoles) {
