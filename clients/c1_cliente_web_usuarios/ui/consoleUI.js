@@ -30,7 +30,7 @@ async function showMainMenu() {
     return choice;
 }
 
-async function showUserMenu(username) {
+/*async function showUserMenu(username) {
     const { choice } = await inquirer.prompt([
         {
             type: 'list',
@@ -42,6 +42,25 @@ async function showUserMenu(username) {
                 { name: '3. Ver Catálogo', value: '3' }, 
                 new inquirer.Separator(),
                 { name: '4. Logout', value: '4' },
+            ],
+        },
+    ]);
+    return choice;
+}*/
+
+async function showUserMenu(username) {
+    const { choice } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'choice',
+            message: `Bienvenido, ${username}! ¿Qué deseas hacer?`,
+            choices: [
+                { name: '1. Ajustar Preferencias', value: '1' },
+                { name: '2. Gestionar Mascotas', value: '2' },
+                { name: '3. Ver Catálogo', value: '3' },
+                { name: '4. Ver Carrito de Compras', value: '4' }, // <-- AÑADIR
+                new inquirer.Separator(),
+                { name: '5. Logout', value: '5' }, // <-- ACTUALIZAR
             ],
         },
     ]);
@@ -79,6 +98,8 @@ async function promptForPreferenceToDelete() {
     ]);
 }
 
+// En ui/consoleUI.js, reemplaza la función promptForPostListingAction
+
 async function promptForPostListingAction() {
     const { choice } = await inquirer.prompt([
         {
@@ -86,8 +107,8 @@ async function promptForPostListingAction() {
             name: 'choice',
             message: '¿Qué deseas hacer ahora?',
             choices: [
-                { name: '1. Agregar un producto a mis Preferencias', value: 'add_preference' },
-                { name: '2. Agregar un producto al Carrito de Compras', value: 'add_to_cart' },
+                { name: '1. Agregar un ítem al Carrito de Compras', value: 'add_to_cart' },
+                { name: '2. Agregar un ítem a mis Preferencias', value: 'add_preference' },
                 new inquirer.Separator(),
                 { name: '3. Volver al menú anterior', value: 'back' },
             ],
@@ -235,6 +256,98 @@ function close() {
     rl.close();
 }
 
+// --- CARRITO DE COMPRAS ---
+
+async function showCartMenu(hasItems) {
+    const choices = [];
+    if (hasItems) {
+        choices.push(
+            { name: '1. ✅ Realizar Compra', value: '1' },
+            { name: '2. 🗑️ Eliminar un ítem del carrito', value: '2' },
+            new inquirer.Separator(),
+        );
+    }
+    choices.push({ name: '3. ↩️ Volver al menú principal', value: '3' });
+
+    const { choice } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'choice',
+            message: '🛒 Gestionar Carrito',
+            choices: choices,
+        },
+    ]);
+    return choice;
+}
+
+async function promptForItemId(itemType, action) {
+    const { itemId } = await inquirer.prompt([
+        {
+            type: 'input',
+            name: 'itemId',
+            message: `Ingresa el ID del ${itemType} que quieres ${action}:`,
+            validate: function(value) {
+                // Valida que la entrada sea un número
+                if (value.match(/^[0-9]+$/)) {
+                    return true;
+                }
+                return 'Por favor, ingresa un ID numérico válido.';
+            }
+        }
+    ]);
+    return { itemId };
+}
+
+async function promptForQuantity(maxStock, itemType) {
+    const { quantity } = await inquirer.prompt([
+        {
+            type: 'number',
+            name: 'quantity',
+            message: 'Ingresa la cantidad:',
+            default: 1,
+            validate: (value) => {
+                if (value > 0) {
+                    if (itemType === 'producto' && value > maxStock) {
+                        return `La cantidad no puede superar el stock disponible (${maxStock}).`;
+                    }
+                    return true;
+                }
+                return 'La cantidad debe ser mayor a 0.';
+            }
+        }
+    ]);
+    return { quantity };
+}
+
+async function promptToRemoveFromCart(cartItems) {
+    const choices = cartItems.map((item, index) => ({
+        name: `${item.quantity}x ${item.name} ($${item.price})`,
+        value: index
+    }));
+
+    const { itemIndex } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'itemIndex',
+            message: 'Selecciona el ítem a eliminar:',
+            choices: choices,
+        }
+    ]);
+    return { itemIndex };
+}
+
+async function promptForPurchaseConfirmation(total) {
+    const { confirmed } = await inquirer.prompt([
+        {
+            type: 'confirm',
+            name: 'confirmed',
+            message: `El total de tu compra es $${total}. ¿Confirmas la compra?`,
+            default: true,
+        },
+    ]);
+    return confirmed;
+}
+
 module.exports = {
     showMainMenu,
     showUserMenu,
@@ -249,6 +362,11 @@ module.exports = {
     showCatalogMenu,
     promptForPostListingAction,
     promptForPreferenceId,
+    showCartMenu,
+    promptForItemId,
+    promptForQuantity,
+    promptToRemoveFromCart,
+    promptForPurchaseConfirmation,
     close: () => {
         console.log('Adios!')
     }
