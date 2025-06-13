@@ -1,4 +1,4 @@
-const {pool} = require('../db.js');
+const {pool} = require('../../../bus_service_helpers/db.js');
 const config = require('../config.js');
 
 async function getAvailableSlots(date, idServicio) {
