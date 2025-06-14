@@ -2,6 +2,7 @@
 
 const ui = require('../ui/consoleUI');
 const bus = require('../services/busService');
+const jwt = require('jsonwebtoken'); // <--- AÑADE ESTA LÍNEA EXACTAMENTE AQUÍ
 
 // --- ESTADO DEL CARRITO (EN MEMORIA) ---
 // El carrito será un array de objetos:
@@ -98,38 +99,66 @@ async function handleViewCart() {
     console.log(`------------------------------------\n`);
 }
 
+// ... (el resto del archivo, como cartItems, addToCart, etc., permanece igual)
+
+// === REEMPLAZA ESTA FUNCIÓN COMPLETA ===
 async function handlePurchase(token) {
     if (cartItems.length === 0) {
         return console.log('\n❌ No puedes realizar una compra con el carrito vacío.');
     }
 
-    const confirmed = await ui.promptForPurchaseConfirmation(calculateTotal());
+    const total = calculateTotal();
+    const confirmed = await ui.promptForPurchaseConfirmation(total);
     if (!confirmed) {
         return console.log('\nCompra cancelada.');
     }
 
-    // Formatear los datos para el servicio ORDEN
-    // Payload esperado: crear;[token_jwt];tipo1,id1,cant1|tipo2,id2,cant2|...
+    // --- CAMBIOS CLAVE AQUÍ ---
+
+    // 1. Decodificar el token para obtener el ID del cliente
+    let id_cliente;
+    try {
+        const decoded = jwt.decode(token);
+        if (!decoded || !decoded.id) {
+            console.error('\n❌ Error: Token inválido o corrupto. No se pudo obtener el ID de cliente.');
+            return;
+        }
+        id_cliente = decoded.id;
+    } catch (error) {
+        console.error('\n❌ Error al decodificar el token:', error.message);
+        return;
+    }
+
+    // 2. Formatear los ítems como ya lo hacías
     const itemsPayload = cartItems.map(item => {
-        const typeCode = item.type === 'producto' ? 'P' : 'S';
-        return `${typeCode},${item.id},${item.quantity}`;
+        // En tu servicio de ordenes esperas (id_producto, cantidad, precio_unitario)
+        return `${item.id},${item.quantity},${item.price}`;
     }).join('|');
 
-    const transactionData = `crear;${token};${itemsPayload}`;
+    // 3. Construir el payload CORRECTO con los 5 campos
+    // formato: crear;token;id_cliente;itemsPayload;total
+    const transactionData = `crear;${token};${id_cliente};${itemsPayload};${total}`;
 
-    console.log('\n Procesando tu orden...');
+    // --- FIN DE CAMBIOS CLAVE ---
+
+    console.log('\n⏳ Procesando tu orden...');
+
+    // El servicio de órdenes (S5) tiene el código 'ORDEN'
     const response = await bus.send('ORDEN', transactionData);
 
-    if (response.status === 'OK' && response.data.startsWith('crear;')) {
+    // La respuesta de S5 confirma que la orden fue creada.
+    // La generación del comprobante y la notificación ocurren en segundo plano.
+    if (response.status === 'OK' && response.data.startsWith('ORCR;')) {
         const orderId = response.data.split(';')[1];
-        console.log(`\n✅ ¡Compra realizada con éxito! El ID de tu orden es: ${orderId}`);
-        console.log('Gracias por tu compra. Vaciando el carrito...');
+        console.log(`\n ¡Compra realizada con éxito! El ID de tu orden es: ${orderId}`);
+        console.log('   Se ha iniciado la generación de tu comprobante y recibirás una notificación por email.');
+        console.log('   Gracias por tu compra. Vaciando el carrito...');
         cartItems = []; // Vaciar el carrito después de una compra exitosa
     } else {
-        console.error(`\n❌ Hubo un error al procesar tu orden: ${response.message || response.data}`);
+        const errorMessage = response.data.split(';')[1] || 'Error desconocido del servicio.';
+        console.error(`\n Hubo un error al procesar tu orden: ${errorMessage}`);
     }
 }
-
 
 async function handleCartSubMenu(token) {
     let keepInMenu = true;
