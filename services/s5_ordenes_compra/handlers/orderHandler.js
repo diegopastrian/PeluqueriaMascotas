@@ -1,6 +1,8 @@
 // handlers/orderHandler.js
 const pool = require('../../../bus_service_helpers/db.js');
 const { verifyToken } = require('../helpers/jwtHelper');
+const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper'); // Ajusta esta ruta si tu estructura es diferente
+const SERVICE_CODE = 'ORDEN';
 
 // Operación: ORCR (Crear Orden)
 async function handleCreateOrder(fields, serviceSocket) {
@@ -47,6 +49,7 @@ async function handleCreateOrder(fields, serviceSocket) {
         const comprobantePayload = `generar;ORDEN;${id_orden};${id_cliente}`;
         const comprTransaction = buildTransaction('COMPR', comprobantePayload);
         console.log(`[ORDEN] Invocando al servicio COMPR (S6): ${comprTransaction}`);
+
         serviceSocket.write(comprTransaction);
         
         return `ORCR;${id_orden};procesando`;
@@ -61,7 +64,7 @@ async function handleCreateOrder(fields, serviceSocket) {
 }
 
 // Operación: ORES (Obtener Estado de Orden)
-async function handleGetOrderStatus(fields) {
+async function handleGetOrderStatus(fields, serviceSocket) {
     // Payload esperado: obtener;token_sesion_cliente;id_orden
     if (fields.length !== 3) {
         throw new Error('ORES;Formato de mensaje invalido. Se esperan 3 campos.');
@@ -87,7 +90,48 @@ async function handleGetOrderStatus(fields) {
 }
 
 
+
+
+
+async function handleGetALLOrder(fields) {
+    if (fields.length < 2 || fields.length > 2) {
+        throw new Error('ORES;Formato de mensaje inválido. Se espera: ORES;token;id_cliente|todas');
+    }
+
+    const [, id_clientee] = fields;
+
+    let query;
+    let params;
+
+    if (id_clientee === 'todas') {
+        // Listar todas las órdenes
+        query = 'SELECT id_orden, id_cliente, fecha, estado, total FROM ordenes';
+        params = [];
+    } else {
+        // Verificar que id_cliente sea un número válido
+        const id_cliente_num = parseInt(id_clientee);
+        if (isNaN(id_cliente_num)) {
+            throw new Error('obtener_one_or_all;ID de cliente inválido.');
+        }
+        // Filtrar por cliente específico
+        query = 'SELECT id_orden, id_cliente, fecha, estado, total FROM ordenes WHERE id_cliente = $1';
+        params = [id_cliente_num];
+    }
+
+    const result = await pool.query(query, params);
+
+    if (result.rows.length === 0) {
+    return 'obtener_one_or_all;Sin órdenes encontradas.';
+    }
+    //console.log(result.rows);
+    const {id_orden,id_cliente, estado, fecha, total} = result.rows;
+    return `obtener_one_or_all;${result.rows.map(row => (`${row.id_orden};${row.id_cliente};${row.estado};${new Date(row.fecha).toISOString()};${row.total}`)).join('|')}`;
+
+
+}
+
 module.exports = {
     handleCreateOrder,
     handleGetOrderStatus,
+    handleGetALLOrder
 };
