@@ -8,6 +8,8 @@ async function showMainMenu(isAuthenticated) {
       { name: 'Consultar Stock', value: 'queryStock' },
       { name: 'Consulta de Clientes y Mascotas', value: 'clientAndPets' },
       { name: 'Gestión de Citas', value: 'appointments' },
+      { name: 'Registro de Ventas', value: 'sales' },
+    //  { name: 'Registrar Servicio', value: 'registerService' },
       { name: 'Cerrar Sesión', value: 'logout' },
     ] : [
       { name: 'Registrarse como empleado', value: 'register' },
@@ -51,9 +53,6 @@ async function showAppointmentsMenu() {
   const choices = [
     { name: 'Consultar Horarios Disponibles', value: 'getAvailableSlots' },
     { name: 'Ver Mi Agenda de Citas', value: 'viewAgenda' },
-   // { name: 'Crear Cita', value: 'createAppointment' },
-   // { name: 'Modificar Cita', value: 'modifyAppointment' },
-   // { name: 'Cancelar Cita (Cliente)', value: 'cancelClientAppointment' },
     { name: 'Listar Citas de un Cliente', value: 'listClientAppointments' },
     { name: 'Volver al Menú Principal', value: 'back' },
   ];
@@ -425,6 +424,110 @@ async function promptAgendaAction(citas) {
   return { action: 'confirm', idCita };
 }
 
+async function promptListOrders() {
+  return inquirer.prompt([
+    {
+      type: 'input',
+      name: 'idCliente',
+      message: 'ID del cliente (opcional, presione Enter para listar todas las órdenes):',
+      validate: (input) => !input || /^\d+$/.test(input) ? true : 'El ID del cliente debe ser un número',
+      
+    },
+  ]);
+}
+
+async function promptGenerateComprobante(orders) {
+  const [operation, ...data] = orders.split(';');
+
+  if (operation !== 'obtener_one_or_all') {
+    console.error('Operación no válida');
+    return [];
+  }
+
+  // Reconstruye la cadena después del primer ';'
+  const dataString = data.join(';');
+
+  // Ahora separa por orden individual usando '|'
+  const ordenesRaw = dataString.split('|');
+   const ordenes = ordenesRaw.map(row => {
+    const [id_orden, id_cliente, estado, fecha, total] = row.split(';');
+    return {
+      id_orden: parseInt(id_orden),
+      id_cliente: parseInt(id_cliente),
+      estado,
+      fecha,
+      total: parseFloat(total)
+    };
+  });
+
+  const choices = ordenes.map(order => ({
+    name: `Orden ID: ${order.id_orden} - Cliente: (ID: ${order.id_cliente}) - Fecha: ${order.fecha} - Total: ${order.total} [${order.estado}]`,
+    value: order.id_orden,
+  }));
+
+  const { idOrden } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'idOrden',
+      message: 'Seleccione una orden para generar comprobante:',
+      choices: [...choices, { name: 'Volver', value: 'back' }],
+    },
+  ]);
+
+  if (idOrden === 'back') return { action: 'back' };
+
+  const { tipoComprobante } = await inquirer.prompt([
+    {
+      type: 'list',
+      name: 'tipoComprobante',
+      message: 'Seleccione el tipo de comprobante:',
+      choices: [
+        { name: 'Comprobante de Orden', value: 'ORDEN' },
+      ],
+    },
+  ]);
+  const selectedOrder = ordenes.find(o => o.id_orden === idOrden);
+
+  return { action: 'generate', idOrden, tipoComprobante , order: selectedOrder };
+}
+
+async function promptRegisterService() {
+  return inquirer.prompt([
+    {
+      type: 'input',
+      name: 'idCliente',
+      message: 'ID del cliente:',
+      validate: (input) => /^\d+$/.test(input) ? true : 'El ID del cliente debe ser un número',
+    },
+    {
+      type: 'input',
+      name: 'idCita',
+      message: 'ID de la cita origen (opcional, presione Enter para omitir):',
+      validate: (input) => !input || /^\d+$/.test(input) ? true : 'El ID de la cita debe ser un número',
+      default: '',
+    },
+    {
+      type: 'input',
+      name: 'idsServicios',
+      message: 'IDs de servicios realizados (separados por comas, ej: 1,2):',
+      validate: (input) => /^(\d+,)*\d+$/.test(input) ? true : 'Los IDs deben ser números separados por comas',
+    },
+    {
+      type: 'input',
+      name: 'fecha',
+      message: 'Fecha del servicio (YYYY-MM-DD, presione Enter para usar la fecha actual):',
+      validate: (input) => !input || /^\d{4}-\d{2}-\d{2}$/.test(input) ? true : 'La fecha debe tener el formato YYYY-MM-DD',
+      default: '',
+    },
+    {
+      type: 'input',
+      name: 'comentarios',
+      message: 'Comentarios (opcional, presione Enter para omitir):',
+      default: '',
+    },
+  ]);
+}
+
 module.exports = {
   showMainMenu,
   showClientAndPetsMenu,
@@ -442,4 +545,7 @@ module.exports = {
   promptListClients,
   promptListClientPets,
   promptAgendaAction,
+  promptListOrders,
+  promptGenerateComprobante,
+  promptRegisterService,
 };
