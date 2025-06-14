@@ -46,11 +46,14 @@ serviceSocket.on('data', async (data) => {
             case 'obtener': // Corresponde a ORES
                 responseData = await orderHandler.handleGetOrderStatus(fields);
                 break;
+            case 'obtener_one_or_all': // Corresponde a ORES
+                responseData = await orderHandler.handleGetALLOrder(fields);
+                break;
             default:
                 throw new Error(`Operación '${operation}' desconocida para el servicio ${SERVICE_CODE}`);
         }
         
-        const response = buildTransaction(SERVICE_CODE, responseData, 'OK');
+        const response = buildTransaction(SERVICE_CODE, responseData);
         serviceSocket.write(response);
 
     } catch (error) {
