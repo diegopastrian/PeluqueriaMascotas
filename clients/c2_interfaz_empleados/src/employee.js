@@ -16,11 +16,17 @@ const {
   promptListClients,
   promptListClientPets,
   promptAgendaAction,
+  promptListOrders,
+  promptGenerateComprobante,
+  promptRegisterService,
 } = require('./ui/adminConsole');
 const { registerEmployee, loginEmployee } = require('./actions/authService');
 const { adjustStock, addStock, queryStock } = require('./actions/stockService');
 const { getAvailableSlots, createAppointment, modifyAppointment, cancelClientAppointment, cancelEmployeeAppointment, listClientAppointments, listEmployeeAgenda, confirmAppointment } = require('./actions/citasservice');
 const { listClients, listClientPets } = require('./actions/clientService');
+const { listOrders, getOrderDetails } = require('./actions/orden_service');
+const { registerService, getPetHistory } = require('./actions/historial_service');
+const { generateComprobante } = require('./actions/comprobante_service');
 const { mostrarHorariosDisponibles } = require('./extras/mostrarHorariosDisponibles');
 const { verifyToken } = require('./extras/verify_token');
 
@@ -34,13 +40,11 @@ const parseCitas = (data) =>
   });
 
 const handleResult = (result, displayFn = console.log) =>
-  displayFn(`✅ ${result.message}: ${result.data}`);
+  displayFn(`✅ ${result.message}${result.data ? `: ${typeof result.data === 'string' ? result.data : JSON.stringify(result.data)}` : ''}`);
 
 const handleError = (error) => console.error(`❌ Error: ${error.message}`);
 
 const actions = {
-
-  //autenticacion
   register: async () => handleResult(await registerEmployee(await promptRegisterEmployee())),
   login: async (ctx) => {
     const { token: newToken, id, nombre, message } = await loginEmployee(await promptLoginEmployee());
@@ -53,8 +57,6 @@ const actions = {
     Object.assign(ctx, { token: '', employeeId: '', employeeName: '' });
     console.log('✅ Sesión cerrada');
   },
-
-  ///stockk
   adjustStock: async ({ token }) => handleResult(await adjustStock(token, ...(Object.values(await promptAdjustStock())))),
   addStock: async ({ token }) => handleResult(await addStock(token, ...(Object.values(await promptAddStock())))),
   queryStock: async () => handleResult(await queryStock((await promptQueryStock()).productId)),
@@ -69,8 +71,6 @@ const actions = {
       await subActions[subAction]?.();
     }
   },
-
-  //gestion citas
   appointments: async ({ employeeId }) => {
     while (true) {
       const subAction = await showAppointmentsMenu();
@@ -131,6 +131,51 @@ const actions = {
         },
       };
       await subActions[subAction]?.();
+    }
+  },
+  sales: async () => {
+    while (true) {
+      const dataa  = await promptListOrders();
+      //console.log(dataa)
+      const result = await listOrders(dataa.idCliente);
+    // console.log(result)
+      if (result.data.length === 0) {
+        console.log('ℹ️ No hay órdenes disponibles.');
+        return;
+      }
+      console.log(result.data);
+while (true) {
+  const { action, idOrden, tipoComprobante, order } = await promptGenerateComprobante(result.data);
+  //console.log(promptGenerateComprobante(result.data.action))
+  if (action === 'back') break;
+  if (action === 'generate') {
+    handleResult(await generateComprobante(tipoComprobante, idOrden, order.id_cliente));
+    console.log(generateComprobante(tipoComprobante, idOrden, order.id_cliente))
+  }
+}
+    }
+  },
+  registerService: async ({ token }) => {
+    const data = await promptRegisterService();
+    const pets = await listClientPets(data.idCliente);
+    if (!pets.length) throw new Error('El cliente no tiene mascotas registradas.');
+    console.table(pets);
+    const petIds = pets.map(pet => pet.id_mascota);
+    const historyResult = await getPetHistory(token, petIds[0]); // Asumimos que las mascotas comparten servicios
+    if (historyResult.data.length > 0) {
+      console.table(historyResult.data);
+    } else {
+      console.log('ℹ️ No hay historial de servicios para esta mascota.');
+    }
+    for (const idMascota of petIds) {
+      const serviceResult = await registerService(
+        idMascota,
+        data.idCita || '',
+        data.idsServicios.split(',').map(Number),
+        data.fecha || new Date().toISOString().split('T')[0],
+        data.comentarios || ''
+      );
+      handleResult(serviceResult);
     }
   },
 };
