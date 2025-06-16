@@ -5,7 +5,8 @@
   "main": "index.js",
   "scripts": {
     "start:services": "node start-services.js",
-    "test": "echo \"Error: no test specified\" && exit 1"
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "install:all": "node scripts/install-all.js"
   },
   "keywords": [],
   "author": "",
