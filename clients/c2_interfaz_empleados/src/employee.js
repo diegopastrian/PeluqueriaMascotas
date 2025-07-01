@@ -21,7 +21,7 @@ const {
   promptRegisterService,
 } = require('./ui/adminConsole');
 const { registerEmployee, loginEmployee } = require('./actions/authService');
-const { adjustStock, addStock, queryStock } = require('./actions/stockService');
+const { adjustStock, addStock, queryStock ,consultaglobal, showAllStockTable} = require('./actions/stockService');
 const { getAvailableSlots, createAppointment, modifyAppointment, cancelClientAppointment, cancelEmployeeAppointment, listClientAppointments, listEmployeeAgenda, confirmAppointment } = require('./actions/citasservice');
 const { listClients, listClientPets } = require('./actions/clientService');
 const { listOrders, getOrderDetails } = require('./actions/orden_service');
@@ -57,9 +57,14 @@ const actions = {
     Object.assign(ctx, { token: '', employeeId: '', employeeName: '' });
     console.log('✅ Sesión cerrada');
   },
-  adjustStock: async ({ token }) => handleResult(await adjustStock(token, ...(Object.values(await promptAdjustStock())))),
-  addStock: async ({ token }) => handleResult(await addStock(token, ...(Object.values(await promptAddStock())))),
-  queryStock: async () => handleResult(await queryStock((await promptQueryStock()).productId)),
+  adjustStock: async ({ token }) =>{ 
+  await showAllStockTable();  
+  handleResult(await adjustStock(token, ...(Object.values(await promptAdjustStock()))))
+  },
+  addStock: async ({ token }) => {
+  await showAllStockTable();  
+  handleResult(await addStock(token, ...(Object.values(await promptAddStock()))))},
+  queryStock: async () => await showAllStockTable(),//handleResult(await queryStock((await promptQueryStock()).productId)),
   clientAndPets: async () => {
     while (true) {
       const subAction = await showClientAndPetsMenu();
@@ -134,27 +139,32 @@ const actions = {
     }
   },
   sales: async () => {
-    while (true) {
-      const dataa  = await promptListOrders();
-      //console.log(dataa)
-      const result = await listOrders(dataa.idCliente);
-    // console.log(result)
-      if (result.data.length === 0) {
-        console.log('ℹ️ No hay órdenes disponibles.');
-        return;
-      }
-      console.log(result.data);
-while (true) {
-  const { action, idOrden, tipoComprobante, order } = await promptGenerateComprobante(result.data);
-  //console.log(promptGenerateComprobante(result.data.action))
-  if (action === 'back') break;
-  if (action === 'generate') {
-    handleResult(await generateComprobante(tipoComprobante, idOrden, order.id_cliente));
-    console.log(generateComprobante(tipoComprobante, idOrden, order.id_cliente))
-  }
-}
+  let exit = false;
+
+  while (!exit) {
+    const dataa = await promptListOrders();
+    const result = await listOrders(dataa.idCliente);
+
+    if (result.data.length === 0) {
+      console.log('ℹ️ No hay órdenes disponibles.');
+      return;
     }
-  },
+
+    while (true) {
+      const { action, idOrden, tipoComprobante, order } = await promptGenerateComprobante(result.data);
+
+      if (action === 'back') {
+        exit = true;
+        break;
+      }
+
+      if (action === 'generate') {
+        const response = await generateComprobante(tipoComprobante, idOrden, order.id_cliente);
+        handleResult(response);
+      }
+    }
+  }
+},
   registerService: async ({ token }) => {
     const data = await promptRegisterService();
     const pets = await listClientPets(data.idCliente);
