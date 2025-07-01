@@ -184,6 +184,29 @@ async function handleOperation(data, socket) {
                     responseData = `agregar;Error al agregar el producto`;
                     socket.write(buildTransaction(SERVICE_CODE, responseData));
                 }
+            }else if (operation === 'consulta_padre') {
+  try {
+    const result = await pool.query('SELECT id_producto, nombre, stock FROM productos');
+
+    if (result.rows.length === 0) {
+      responseData = `consulta_padre;`; // sin productos
+    } else {
+      const productosFormateados = result.rows.map(row => {
+        return `${row.id_producto};${row.nombre};${row.stock}`;
+      });
+
+      // Unir los productos con '|'
+      const productosStr = productosFormateados.join('|');
+      responseData = `consulta_padre;${productosStr}`;
+    }
+
+    socket.write(buildTransaction(SERVICE_CODE, responseData));
+  } catch (error) {
+    console.error('❌ Error al consultar productos:', error.message);
+    responseData = `consulta_padre;Error al consultar productos`;
+    socket.write(buildTransaction(SERVICE_CODE, responseData, false)); // false = NK
+  }
+
             }
 
             // --- Operacion no reconocida ---
