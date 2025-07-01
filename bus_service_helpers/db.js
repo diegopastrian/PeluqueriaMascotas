@@ -1,6 +1,6 @@
 // bus_service_helpers/db.js
 
-const  Pool  = require('pg');
+const  {Pool}  = require('pg');
 const path = require('path');
 
 // Cargamos las variables de entorno globales del proyecto  
