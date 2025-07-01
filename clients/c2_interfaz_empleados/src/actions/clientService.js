@@ -1,4 +1,4 @@
-const {pool} = require('../../../../bus_service_helpers/db.js');
+const pool = require('../../../../bus_service_helpers/db.js');
 
 async function listClients() {
   const query = `
