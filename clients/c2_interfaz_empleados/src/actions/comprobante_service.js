@@ -16,7 +16,7 @@ async function generateComprobante(tipoComprobante, idReferenciaOrigen, idClient
         return;
       }
 
-      const request = buildTransaction(COMPR_SERVICE_CODE, `generar;${tipoComprobante};${idReferenciaOrigen};${idCliente}`);
+      const request = buildTransaction(COMPR_SERVICE_CODE, `generarADM;${tipoComprobante};${idReferenciaOrigen};${idCliente}`);
       console.log(`[EMPLEADO] Enviando solicitud de generación de comprobante: ${request}`);
       clientSocket.write(request);
     });
@@ -31,7 +31,7 @@ async function generateComprobante(tipoComprobante, idReferenciaOrigen, idClient
           const fields = parsed.data.split(';');
           const operation = fields[0];
 
-          if (parsed.serviceName === COMPR_SERVICE_CODE && operation === 'generar') {
+          if (parsed.serviceName === COMPR_SERVICE_CODE && operation === 'generarADM') {
             if (parsed.status === 'OK') {
               resolve({ message: 'Comprobante generado y enviado exitosamente', data: parsed.data });
             } else {
