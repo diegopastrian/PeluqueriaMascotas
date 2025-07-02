@@ -144,6 +144,12 @@ async function handleListar(fields) {
 
   try {
     const citas = await listClientAppointments(idClienteNum, estado_filtro || null);
+
+    // ⚠️ Aquí revisas si el array está vacío
+    if (citas.length === 0) {
+      return `listar;Sin citas de este tipo :(`;
+    }
+
     const citasStr = citas.map(cita => `${cita.id_cita},${cita.fecha_hora},${cita.estado}`).join(';');
     return `listar;${citasStr}`;
   } catch (err) {
@@ -151,6 +157,8 @@ async function handleListar(fields) {
     return `listar;${err.message}`;
   }
 }
+
+
 async function handleListarAgenda(fields) {
   if (fields.length !== 2) {
     return `listarAgenda;Formato inválido: Se esperan 2 campos (listarAgenda;id_empleado)`;
