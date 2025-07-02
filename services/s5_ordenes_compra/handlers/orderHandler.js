@@ -1,5 +1,6 @@
 // handlers/orderHandler.js
 const pool = require('../../../bus_service_helpers/db.js');
+const { formatFecha } = require('../helpers/convert_fecha'); // ajusta la ruta según tu estructura
 const { verifyToken } = require('../helpers/jwtHelper');
 const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper'); // Ajusta esta ruta si tu estructura es diferente
 const SERVICE_CODE = 'ORDEN';
@@ -45,7 +46,6 @@ async function handleCreateOrder(fields, serviceSocket) {
 
         // 3. (FLUJO TRANSACCIONAL) Invocar a otros servicios DESPUÉS de confirmar la transacción de DB
         // Invocar a S6 para generar el comprobante
-        const { buildTransaction } = require('../../../bus_service_helpers/transactionHelper');
         const comprobantePayload = `generar;ORDEN;${id_orden};${id_cliente}`;
         const comprTransaction = buildTransaction('COMPR', comprobantePayload);
         console.log(`[ORDEN] Invocando al servicio COMPR (S6): ${comprTransaction}`);
@@ -86,7 +86,7 @@ async function handleGetOrderStatus(fields, serviceSocket) {
     }
 
     const { estado, fecha, total } = result.rows[0];
-    return `ORES;${id_orden};${estado};${fecha.toISOString()};${total}`;
+    return `obtener;${id_orden};${estado};${fecha.toISOString()};${total}`;
 }
 
 
@@ -125,8 +125,15 @@ async function handleGetALLOrder(fields) {
     }
     //console.log(result.rows);
     const {id_orden,id_cliente, estado, fecha, total} = result.rows;
-    return `obtener_one_or_all;${result.rows.map(row => (`${row.id_orden};${row.id_cliente};${row.estado};${new Date(row.fecha).toISOString()};${row.total}`)).join('|')}`;
+const ordenesProcesando = result.rows.filter(row => row.estado === 'procesando');
 
+if (ordenesProcesando.length > 0) {
+    return `obtener_one_or_all;${ordenesProcesando.map(row => (
+        `${row.id_orden};${row.id_cliente};${row.estado};${formatFecha(row.fecha)};${row.total}`
+    )).join('|')}`;
+} else {
+    return 'obtener_one_or_all;SIN ORDENES EN PROCESO';
+}
 
 }
 
