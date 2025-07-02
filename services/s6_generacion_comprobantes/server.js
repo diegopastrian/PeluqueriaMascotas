@@ -41,6 +41,9 @@ serviceSocket.on('data', async (data) => {
             case 'generar': // Corresponde a GEBO
                 responseData = comprobanteHandler.handleGenerateComprobante(fields, serviceSocket);
                 break;
+            case 'generarADM': // Corresponde a GEBO
+                responseData = comprobanteHandler.handleGenerateComprobanteAdmin(fields, serviceSocket);
+                break;
             default:
                 throw new Error(`Operación '${operation}' desconocida para el servicio ${SERVICE_CODE}`);
         }
