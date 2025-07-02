@@ -130,10 +130,22 @@ const actions = {
           const data = await promptCancelClientAppointment();
           handleResult(await cancelClientAppointment(data.idCita, data.idCliente, data.motivo));
         },
-        listClientAppointments: async () => {
-          const data = await promptListClientAppointments();
-          handleResult(await listClientAppointments(data.idCliente, data.estadoFiltro || null), (msg) => console.table(parseCitas(msg.split(': ')[1])));
-        },
+listClientAppointments: async () => {
+  const data = await promptListClientAppointments();
+
+  const response = await listClientAppointments(data.idCliente, data.estadoFiltro || null);
+
+  handleResult(response, (msg) => {
+    const body = msg.split(': ')[1];
+
+    if (body.includes('Sin citas')) {
+      console.log('📭 No hay citas con ese estado para mostrar.');
+    } else {
+      const citas = parseCitas(body);
+      console.table(citas);
+    }
+  });
+},
       };
       await subActions[subAction]?.();
     }
@@ -161,6 +173,8 @@ const actions = {
       if (action === 'generate') {
         const response = await generateComprobante(tipoComprobante, idOrden, order.id_cliente);
         handleResult(response);
+        exit = true;
+        break;
       }
     }
   }
