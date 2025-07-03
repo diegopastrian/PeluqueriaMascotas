@@ -30,24 +30,6 @@ async function showMainMenu() {
     return choice;
 }
 
-/*async function showUserMenu(username) {
-    const { choice } = await inquirer.prompt([
-        {
-            type: 'list',
-            name: 'choice',
-            message: `Bienvenido, ${username}! ¿Qué deseas hacer?`,
-            choices: [
-                { name: '1. Ajustar Preferencias', value: '1' },
-                { name: '2. Gestionar Mascotas', value: '2' },
-                { name: '3. Ver Catálogo', value: '3' }, 
-                new inquirer.Separator(),
-                { name: '4. Logout', value: '4' },
-            ],
-        },
-    ]);
-    return choice;
-}*/
-
 async function showUserMenu(username) {
     const { choice } = await inquirer.prompt([
         {
@@ -234,6 +216,17 @@ async function promptForPetId(action) {
     return id;
 }
 
+async function promptForPetSelection() {
+    const { petId } = await inquirer.prompt([
+        {
+            type: 'input', name: 'petId',
+            message: 'Ingresa el ID de la mascota para la cual es el servicio:',
+            validate: (value) => value.match(/^[0-9]+$/) ? true : 'Por favor, ingresa un ID numérico válido.'
+        }
+    ]);
+    return { petId };
+}
+
 // -- CATALOGO --
 async function showCatalogMenu() {
     const { choice } = await inquirer.prompt([
@@ -251,6 +244,7 @@ async function showCatalogMenu() {
     ]);
     return choice;
 }
+
 
 function close() {
     rl.close();
@@ -285,7 +279,8 @@ async function promptForItemId(itemType, action) {
         {
             type: 'input',
             name: 'itemId',
-            message: `Ingresa el ID del ${itemType} que quieres ${action}:`,
+            //message: `Ingresa el ID del ${itemType} que quieres ${action}:`,
+            message: `Ingresa el ID del producto que quieres ${action}:`,
             validate: function(value) {
                 // Valida que la entrada sea un número
                 if (value.match(/^[0-9]+$/)) {
@@ -348,6 +343,121 @@ async function promptForPurchaseConfirmation(total) {
     return confirmed;
 }
 
+async function promptForDailySlot(availability) {
+    const choices = Object.keys(availability).sort().map(time => {
+        const vetCount = availability[time].length;
+
+        // --- CAMBIO CLAVE AQUÍ ---
+        // Al no poner la 'Z', new Date() la interpretará como una hora local,
+        // por lo que toLocaleTimeString() no hará ninguna conversión.
+        const timeObj = new Date(`1970-01-01T${time}`);
+
+        const displayTime = timeObj.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit', hour12: true });
+        return {
+            name: `Hora: ${displayTime} (${vetCount} vet. disponible(s))`,
+            value: time
+        };
+    });
+
+    choices.push(new inquirer.Separator(), { name: 'Cancelar', value: null });
+
+    const { selected } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'selected',
+            message: 'Selecciona una hora disponible:',
+            choices: choices,
+            pageSize: 15
+        }
+    ]);
+    return selected;
+}
+
+async function promptForVetSelection(vets) {
+    // Si solo hay un veterinario, se elige automáticamente.
+    if (vets.length === 1) {
+        console.log(`\nSe ha asignado automáticamente al/a la Dr(a). ${vets[0].nombre}.`);
+        return vets[0];
+    }
+
+    const choices = vets.map(vet => ({
+        name: `Dr(a). ${vet.nombre}`,
+        value: vet
+    }));
+    choices.push(new inquirer.Separator(), { name: 'Cancelar', value: null });
+
+    const { selected } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'selected',
+            message: 'Elige un veterinario para tu cita:',
+            choices: choices
+        }
+    ]);
+    return selected;
+}
+
+async function promptForProductAction() {
+    const { choice } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'choice',
+            message: '¿Qué deseas hacer con estos productos?',
+            choices: [
+                { name: '1. 🛒 Agregar un producto al Carrito', value: 'add_to_cart' },
+                { name: '2. ⭐ Agregar un producto a mis Preferencias', value: 'add_preference' },
+                new inquirer.Separator(),
+                { name: '3. ↩️ Volver', value: 'back' },
+            ],
+        },
+    ]);
+    return choice;
+}
+
+async function promptForServiceAction() {
+    const { choice } = await inquirer.prompt([
+        {
+            type: 'list',
+            name: 'choice',
+            message: '¿Qué deseas hacer con estos servicios?',
+            choices: [
+                { name: '1. 📅 Agendar un servicio', value: 'schedule' },
+                { name: '2. ⭐ Agregar un servicio a mis Preferencias', value: 'add_preference' },
+                new inquirer.Separator(),
+                { name: '3. ↩️ Volver', value: 'back' },
+            ],
+        },
+    ]);
+    return choice;
+}
+
+
+// Modificar la confirmación para incluir al veterinario
+async function promptForAppointmentConfirmation(service, vet, time) {
+    const { confirmed } = await inquirer.prompt([
+        {
+            type: 'confirm',
+            name: 'confirmed',
+            message: `¿Confirmas agendar el servicio "${service.name}" con el/la Dr(a). ${vet.nombre} para el día ${new Date(time).toLocaleString()}?`,
+            default: true,
+        },
+    ]);
+    return confirmed;
+}
+
+async function promptForDate(actionText = 'para la cita') {
+    const { date } = await inquirer.prompt([
+        {
+            type: 'input',
+            name: 'date',
+            message: `Ingresa la fecha (YYYY-MM-DD) para ${actionText}:`,
+            validate: (value) => value.match(/^\d{4}-\d{2}-\d{2}$/) ? true : 'Formato inválido. Usa AAAA-MM-DD.'
+        }
+    ]);
+    return { date };
+}
+
+
 module.exports = {
     showMainMenu,
     showUserMenu,
@@ -360,13 +470,19 @@ module.exports = {
     promptForPetId,
     promptForLogoutConfirmation,
     showCatalogMenu,
-    promptForPostListingAction,
     promptForPreferenceId,
     showCartMenu,
     promptForItemId,
     promptForQuantity,
     promptToRemoveFromCart,
     promptForPurchaseConfirmation,
+    promptForDailySlot,
+    promptForVetSelection,
+    promptForAppointmentConfirmation,
+    promptForProductAction,
+    promptForServiceAction,
+    promptForDate,
+    promptForPetSelection,
     close: () => {
         console.log('Adios!')
     }

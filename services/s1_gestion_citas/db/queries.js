@@ -1,4 +1,4 @@
-const {pool} = require('../../../bus_service_helpers/db.js');
+const pool = require('../../../bus_service_helpers/db.js');
 const config = require('../config.js');
 
 async function getAvailableSlots(date, idServicio) {
@@ -199,10 +199,100 @@ async function listClientAppointments(id_cliente, estado_filtro) {
   }));
 }
 
+/**
+ * Obtiene la disponibilidad de horarios para una semana completa a partir de una fecha dada,
+ * considerando la duración del servicio y agrupando los veterinarios disponibles por slot.
+ * @param {string} startDateStr - La fecha de inicio de la semana (formato YYYY-MM-DD).
+ * @param {number} idServicio - El ID del servicio para calcular la duración.
+ * @returns {Promise<object>} - Un objeto con la disponibilidad semanal.
+ */
+/**
+ * Obtiene la disponibilidad de horarios para UN SOLO DÍA,
+ * considerando la duración del servicio.
+ * @param {string} dateStr - La fecha a consultar (formato YYYY-MM-DD).
+ * @param {number} idServicio - El ID del servicio para calcular la duración.
+ * @returns {Promise<object>} - Un objeto con los horarios y los veterinarios disponibles.
+ */
+async function getDailyAvailability(dateStr, idServicio) {
+  // 1. Obtener la duración del servicio
+  const serviceResult = await pool.query('SELECT tiempo_estimado FROM servicios WHERE id_servicio = $1', [idServicio]);
+  if (serviceResult.rows.length === 0) {
+    throw new Error('Servicio no encontrado');
+  }
+  const serviceDurationInterval = serviceResult.rows[0].tiempo_estimado;
+
+  // 2. Consulta simplificada sin manipulación de zona horaria
+  const query = `
+    WITH
+      PossibleSlots AS (
+        SELECT generate_series(
+                 -- Usamos timestamp simple, que tomará la zona horaria del servidor de la DB
+                   ($1::date + $2::time)::timestamp,
+                   ($1::date + $3::time - $4::interval)::timestamp,
+                   '30 minutes'::interval
+               ) AS slot_start
+      ),
+      BookedRanges AS (
+        SELECT
+          c.id_empleado,
+          c.fecha AS start_time,
+          (c.fecha + COALESCE(SUM(s.tiempo_estimado), '30 minutes'::interval)) AS end_time
+        FROM citas c
+               LEFT JOIN cita_servicios cs ON c.id_cita = cs.id_cita_servicio
+               LEFT JOIN servicios s ON cs.id_servicio = s.id_servicio
+        WHERE c.estado != 'cancelada' AND c.fecha::date = $1::date
+        GROUP BY c.id_cita
+      )
+    SELECT
+      -- Devolvemos la hora tal cual, sin conversión
+      to_char(ps.slot_start, 'HH24:MI:SS') AS appointment_time,
+      e.id_empleado,
+      e.nombre AS vet_nombre,
+      e.apellido AS vet_apellido
+    FROM PossibleSlots ps
+           CROSS JOIN empleados e
+    WHERE
+      e.rol = 'veterinario'
+      AND NOT EXISTS (
+      SELECT 1
+      FROM BookedRanges br
+      WHERE br.id_empleado = e.id_empleado
+        AND ps.slot_start < br.end_time
+        AND (ps.slot_start + $4::interval) > br.start_time
+    )
+    ORDER BY appointment_time, e.id_empleado;
+  `;
+
+  const values = [
+    dateStr,
+    config.schedule.startHour,
+    config.schedule.endHour,
+    serviceDurationInterval
+  ];
+
+  const result = await pool.query(query, values);
+
+  // 3. Formatear la respuesta
+  const availability = {};
+  for (const row of result.rows) {
+    const { appointment_time, id_empleado, vet_nombre, vet_apellido } = row;
+    if (!availability[appointment_time]) {
+      availability[appointment_time] = [];
+    }
+    availability[appointment_time].push({ id: id_empleado, nombre: `${vet_nombre} ${vet_apellido}` });
+  }
+
+  return availability;
+}
+
+
+
+
 module.exports = {
   getAvailableSlots,
   createAppointment,
   modifyAppointment,
   cancelClientAppointment,
-  listClientAppointments
+  listClientAppointments,
+  getDailyAvailability
 };

@@ -1,10 +1,22 @@
 const net = require('net');
 const { buildTransaction, parseResponse } = require('../../bus_service_helpers/transactionHelper');
 const config = require('./config.js');
-const { handleHorarios, handleCrear, handleModificar, handleCancelar, handleCancelarEmp, handleListar, handleListarAgenda, handleConfirmar } = require('./handlers/citas');
+// Importamos todas las funciones del handler
+const {
+  handleHorarios,
+  handleCrear,
+  handleModificar,
+  handleCancelar,
+  handleCancelarEmp,
+  handleListar,
+  handleListarAgenda,
+  handleConfirmar,
+  handleVerDia,
+} = require('./handlers/citas');
 const express = require('express');
 
 const serviceSocketToBus = new net.Socket();
+let buffer = '';
 
 function sendSinit(callback) {
   const sinitTransaction = buildTransaction('sinit', config.service.code);
@@ -43,42 +55,48 @@ serviceSocketToBus.connect(config.bus.port, config.bus.host, () => {
   });
 });
 
-serviceSocketToBus.on('data', async (data) => {
-  const rawData = data.toString();
-  const messages = rawData.match(/\d{5}[A-Z]{5}(?:OK|NK)?.*?(?=\d{5}[A-Z]{5}|$)/g) || [rawData];
+/**
+ * Procesa el buffer de datos para extraer y manejar mensajes completos.
+ * Esto es crucial para manejar paquetes TCP fragmentados.
+ */
+async function processServerBuffer() {
+  while (true) {
+    const startIndex = buffer.search(/\d{5}[A-Z]{5}/);
 
-  for (const message of messages) {
-    if (message.length < 10) continue;
-    console.log(`[${config.service.name}] Recibido: ${message}`);
+    if (startIndex === -1) {
+      return;
+    }
 
-    let responseData = '';
+    if (startIndex > 0) {
+      console.warn(`[${config.service.name}] Datos corruptos descartados del buffer: ${buffer.substring(0, startIndex)}`);
+      buffer = buffer.substring(startIndex);
+    }
 
+    if (buffer.length < 5) return;
+
+    const messageLength = parseInt(buffer.substring(0, 5), 10);
+    const totalLength = 5 + messageLength;
+
+    if (buffer.length < totalLength) {
+      return;
+    }
+
+    const message = buffer.substring(0, totalLength);
+    buffer = buffer.substring(totalLength);
+
+    // --- INICIO DE LA LÓGICA DE PROCESAMIENTO CORREGIDA ---
+    console.log(`[${config.service.name}] Procesando mensaje completo: ${message.substring(0, 150)}...`);
     try {
       const parsed = parseResponse(message);
-
       if (parsed.serviceName === 'sinit') continue;
-
-      if (parsed.serviceName !== config.service.code) {
-        responseData = `Servicio incorrecto`;
-        const errorResponse = buildTransaction(config.service.code, responseData);
-        serviceSocketToBus.write(errorResponse);
-        continue;
-      }
+      if (parsed.serviceName !== config.service.code) continue;
 
       const fields = parsed.data.split(';');
-      if (fields.length < 1) {
-        responseData = `Formato inválido: Se espera operación`;
-        const errorResponse = buildTransaction(config.service.code, responseData);
-        serviceSocketToBus.write(errorResponse);
-        continue;
-      }
-
       const operation = fields[0];
-      console.log(`[${config.service.name}] Procesando operación: ${operation} con datos: ${parsed.data}`);
+      let responseData = '';
 
+      // --- Usamos un switch simple y directo, que es más seguro ---
       switch (operation) {
-//todo lo encapsulado son operaciones pra clientes, lo demas es para empleados, para tenerlo en cuenta para c1
-  //=============================================
         case 'horarios':
           responseData = await handleHorarios(fields);
           break;
@@ -94,7 +112,6 @@ serviceSocketToBus.on('data', async (data) => {
         case 'listar':
           responseData = await handleListar(fields);
           break;
-   //=======================================       
         case 'cancelarEmp':
           responseData = await handleCancelarEmp(fields);
           break;
@@ -104,20 +121,28 @@ serviceSocketToBus.on('data', async (data) => {
         case 'confirmar':
           responseData = await handleConfirmar(fields);
           break;
+        case 'verdia':
+          responseData = await handleVerDia(fields);
+          break;
+          // ...
         default:
           responseData = `${operation};Operación desconocida`;
       }
 
-      const response = buildTransaction(config.service.code, responseData);
-      serviceSocketToBus.write(response);
+      serviceSocketToBus.write(buildTransaction(config.service.code, responseData));
     } catch (error) {
-      console.error(`[${config.service.name}] Error general procesando mensaje: ${error.message}`);
-      responseData = `error;${error.message}`;
-      const errorResponse = buildTransaction(config.service.code, responseData);
-      serviceSocketToBus.write(errorResponse);
+      console.error(`[${config.service.name}] Error procesando mensaje: ${error.message}`);
+      serviceSocketToBus.write(buildTransaction(config.service.code, `error;${error.message}`));
     }
+    // --- FIN DE LA LÓGICA DE PROCESAMIENTO ---
   }
+}
+
+serviceSocketToBus.on('data', (data) => {
+  buffer += data.toString();
+  processServerBuffer();
 });
+
 
 serviceSocketToBus.on('close', () => {
   console.log(`[${config.service.name}] Conexión cerrada con el Bus.`);
@@ -127,9 +152,12 @@ serviceSocketToBus.on('error', (err) => {
   console.error(`[${config.service.name}] Error de conexión con el Bus: ${err.message}`);
 });
 
+
+// --- Health Check (sin cambios) ---
 const healthApp = express();
 healthApp.get('/health', (req, res) => {
   res.status(200).send(`${config.service.name} service is active and connected to bus.`);
 });
 healthApp.listen(config.service.healthPort, () => {
+  // console.log(`Health check para ${config.service.name} en puerto ${config.service.healthPort}`);
 });
