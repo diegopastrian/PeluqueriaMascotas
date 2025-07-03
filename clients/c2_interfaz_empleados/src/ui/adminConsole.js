@@ -528,7 +528,47 @@ async function promptRegisterService() {
   ]);
 }
 
+
+
+//const inquirer = require('inquirer');
+
+async function promptOrderReportParams() {
+  const { idCliente, tipo } = await inquirer.prompt([
+    { name: 'idCliente', message: 'ID del cliente:', type: 'input' },
+    {
+      name: 'tipo',
+      message: '¿Cómo deseas definir el rango?',
+      type: 'list',
+      choices: [
+        { name: 'Usar palabra clave (hoy, ultimo_mes, etc.)', value: 'palabra' },
+        { name: 'Usar fechas específicas', value: 'fechas' }
+      ]
+    }
+  ]);
+
+  if (tipo === 'palabra') {
+    const { rango } = await inquirer.prompt([
+      {
+        name: 'rango',
+        message: 'Elige el rango de tiempo:',
+        type: 'list',
+        choices: ['hoy', 'ultima_semana', 'ultimo_mes', 'este_mes', 'todo']
+      }
+    ]);
+    return { idCliente, rango };
+  } else {
+    const { fechaInicio, fechaFin } = await inquirer.prompt([
+      { name: 'fechaInicio', message: 'Fecha de inicio (YYYY-MM-DD):', type: 'input' },
+      { name: 'fechaFin', message: 'Fecha de fin (YYYY-MM-DD):', type: 'input' }
+    ]);
+    return { idCliente, fechaInicio, fechaFin };
+  }
+}
+
+
+
 module.exports = {
+  promptOrderReportParams, //nuevo prompt
   showMainMenu,
   showClientAndPetsMenu,
   showAppointmentsMenu,
