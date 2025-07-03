@@ -95,4 +95,69 @@ async function getOrderDetails(orderId) {
   });
 }
 
-module.exports = { listOrders, getOrderDetails };
+
+
+
+
+
+
+
+
+
+async function getOrderReport(idCliente, rangoFechaOInicio, fin = null) {
+  return new Promise((resolve, reject) => {
+    const clientSocket = new net.Socket();
+
+    clientSocket.connect(BUS_PORT, BUS_HOST, () => {
+      let payload;
+      if (fin) {
+        // Modo fechas explícitas
+        payload = `reporte;${idCliente};${rangoFechaOInicio};${fin}`;
+      } else {
+        // Modo palabra clave
+        payload = `reporte;${idCliente};${rangoFechaOInicio}`;
+      }
+
+      const request = buildTransaction(ORDEN_SERVICE_CODE, payload);
+      console.log(`[EMPLEADO] Enviando solicitud de reporte de órdenes: ${request}`);
+      clientSocket.write(request);
+    });
+
+    clientSocket.on('data', (data) => {
+      const rawData = data.toString();
+      const messages = rawData.match(/\d{5}[A-Z]{5}(?:OK|NK)?.*?(?=\d{5}[A-Z]{5}|$)/g) || [rawData];
+
+      for (const message of messages) {
+        try {
+          const parsed = parseResponse(message);
+          const fields = parsed.data.split(';');
+          const operacion = fields[0];
+
+          if (parsed.serviceName === ORDEN_SERVICE_CODE && operacion === 'ORRP') {
+            if (parsed.status === 'OK') {
+              resolve({ message: 'Reporte de órdenes generado', data: parsed.data });
+            } else {
+              reject(new Error(fields[1] || 'No se pudo generar el reporte.'));
+            }
+          }
+        } catch (err) {
+          reject(new Error(`Error parseando reporte: ${err.message}`));
+        }
+      }
+
+      clientSocket.end();
+    });
+
+    clientSocket.on('error', (err) => {
+      reject(new Error(`Error de conexión: ${err.message}`));
+      clientSocket.end();
+    });
+  });
+}
+
+
+
+
+
+
+module.exports = { listOrders, getOrderDetails, getOrderReport };
