@@ -19,7 +19,11 @@ const {
   promptListOrders,
   promptGenerateComprobante,
   promptRegisterService,
+  promptOrderReportParams, // 👈 agrégalo aquí, no abajo
 } = require('./ui/adminConsole');
+const inquirer = require('inquirer');
+
+const { getOrderReport } = require('./actions/orden_service');
 const { registerEmployee, loginEmployee } = require('./actions/authService');
 const { adjustStock, addStock, queryStock ,consultaglobal, showAllStockTable} = require('./actions/stockService');
 const { getAvailableSlots, createAppointment, modifyAppointment, cancelClientAppointment, cancelEmployeeAppointment, listClientAppointments, listEmployeeAgenda, confirmAppointment } = require('./actions/citasservice');
@@ -154,31 +158,72 @@ listClientAppointments: async () => {
   let exit = false;
 
   while (!exit) {
-    const dataa = await promptListOrders();
-    const result = await listOrders(dataa.idCliente);
+const { action: mainAction } = await inquirer.prompt([
+      {
+        name: 'action',
+        message: '¿Qué deseas hacer?',
+        type: 'list',
+        choices: [
+          { name: ' Ver órdenes y generar comprobante', value: 'comprobante' },
+          { name: ' Generar reporte de órdenes por rango de fechas', value: 'reporte' },
+          { name: ' Volver', value: 'back' }
+        ]
+      }
+    ]);
 
-    if (result.data.length === 0) {
-      console.log('ℹ️ No hay órdenes disponibles.');
-      return;
+    if (mainAction === 'back') {
+      exit = true;
+      break;
     }
 
-    while (true) {
-      const { action, idOrden, tipoComprobante, order } = await promptGenerateComprobante(result.data);
+    if (mainAction === 'comprobante') {
+      const dataa = await promptListOrders();
+      const result = await listOrders(dataa.idCliente);
 
-      if (action === 'back') {
-        exit = true;
-        break;
+      if (result.data.length === 0) {
+        console.log('ℹ️ No hay órdenes disponibles.');
+        continue;
       }
 
-      if (action === 'generate') {
-        const response = await generateComprobante(tipoComprobante, idOrden, order.id_cliente);
-        handleResult(response);
-        exit = true;
-        break;
+      while (true) {
+        const { action, idOrden, tipoComprobante, order } = await promptGenerateComprobante(result.data);
+
+        if (action === 'back') break;
+
+        if (action === 'generate') {
+          const response = await generateComprobante(tipoComprobante, idOrden, order.id_cliente);
+          handleResult(response);
+          break;
+        }
+      }
+    }
+
+    if (mainAction === 'reporte') {
+      const { idCliente, rango, fechaInicio, fechaFin } = await promptOrderReportParams();
+
+      try {
+        const response = rango
+          ? await getOrderReport(idCliente, rango)
+          : await getOrderReport(idCliente, fechaInicio, fechaFin);
+
+        const body = response.data.split(';').slice(1).join(';');
+
+        if (body.includes('No hay órdenes')) {
+          console.log('📭 No hay órdenes en ese rango.');
+        } else {
+          const rows = body.split('|').map(row => {
+            const [id, fecha, estado, total, productos] = row.split(';');
+            return { ID: id, Fecha: fecha, Estado: estado, Poductos:productos, Total: total };
+          });
+          console.table(rows);
+        }
+      } catch (err) {
+        console.error(`❌ ${err.message}`);
       }
     }
   }
-},
+}
+,
   registerService: async ({ token }) => {
     const data = await promptRegisterService();
     const pets = await listClientPets(data.idCliente);
