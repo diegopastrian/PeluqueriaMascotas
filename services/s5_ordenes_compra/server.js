@@ -49,17 +49,21 @@ serviceSocket.on('data', async (data) => {
             case 'obtener_one_or_all': // Corresponde a ORES
                 responseData = await orderHandler.handleGetALLOrder(fields);
                 break;
+            case 'reporte': // Corresponde a ORES
+                responseData = await orderHandler.handleGetOrderReport(fields);
+                break;
             default:
                 throw new Error(`Operación '${operation}' desconocida para el servicio ${SERVICE_CODE}`);
         }
         
         const response = buildTransaction(SERVICE_CODE, responseData);
+        console.log(response)
         serviceSocket.write(response);
 
     } catch (error) {
         console.error(`[${SERVICE_CODE}] Error procesando la transacción:`, error.message);
         // Construir la respuesta de error usando el mensaje de la excepción
-        const response = buildTransaction(SERVICE_CODE, error.message, 'NK');
+        const response = buildTransaction(SERVICE_CODE, error.message);
         serviceSocket.write(response);
     }
 });
