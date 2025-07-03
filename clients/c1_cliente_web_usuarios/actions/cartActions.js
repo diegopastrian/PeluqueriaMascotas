@@ -145,7 +145,7 @@ async function handlePurchase(token) {
 
     // El servicio de órdenes (S5) tiene el código 'ORDEN'
     const response = await bus.send('ORDEN', transactionData);
-
+    console.log(response);
     // La respuesta de S5 confirma que la orden fue creada.
     // La generación del comprobante y la notificación ocurren en segundo plano.
     if (response.status === 'OK' && response.data.startsWith('ORCR;')) {

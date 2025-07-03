@@ -29,34 +29,26 @@ async function handleCreatePet(token) {
     }
     const parts = response.data.split(';');
     if (parts[0] === 'MASCR' && parts[1]) {
-        const petId = parts[1];
-        console.log(`\n✅ ¡Mascota registrada con éxito! ID de la nueva mascota: ${petId}\n`);
+        console.log(`\n✅ ¡Mascota registrada con éxito! ID: ${parts[1]}\n`);
     } else {
         console.error(`\n❌ Error al crear mascota: ${response.data}\n`);
     }
-
 }
 
 async function handleListPets(token) {
-    const transactionData = `MASLI;${token}`;
-    const response = await bus.send('CLIEN', transactionData);
-    console.log(response);
-    if (response.status !== 'OK') {
-        console.error(`\n❌ Error de comunicación: ${response.message || response.data}\n`);
-        return false;
-    }
-    parts = response.data.split(';');
-    if (parts[0] !== 'MASLI') {
-        console.error(`\n❌ Error al listar mascotas: ${response.data}\n`);
-        return false;
-    }
-
     try {
-        const petDataString = parts[1];
-        if (!petDataString) {
+        const response = await bus.send('CLIEN', `MASLI;${token}`);
+        if (response.status !== 'OK') {
+            console.error(`\n❌ Error de comunicación: ${response.data}\n`);
+            return false;
+        }
+
+        const petDataString = response.data.split(';')[1];
+        if (!petDataString || petDataString.trim() === '[]' || petDataString.trim() === '') {
             console.log('\nℹ️ No tienes mascotas registradas.\n');
             return false;
         }
+
         const pets = JSON.parse(petDataString);
         if (pets && pets.length > 0) {
             console.log('\n--- 🐾 Tus Mascotas Registradas ---');
@@ -68,10 +60,11 @@ async function handleListPets(token) {
             return false;
         }
     } catch (e) {
-        console.error('\n❌ Error procesando la respuesta del servidor:', e.message);
+        console.error(`\n❌ Error listando mascotas: ${e.message}`);
         return false;
     }
 }
+
 
 async function handleGetSinglePet(token) {
     const petId = await ui.promptForPetId('ver en detalle');
@@ -81,7 +74,7 @@ async function handleGetSinglePet(token) {
     if (response.status !== 'OK') {
         return console.error(`\n❌ Error de comunicación: ${response.message || response.data}\n`);
     }
-    
+
     // --- CORREGIDO: Verificamos el contenido de la respuesta ---
     const parts = response.data.split(';');
     if (parts[0] === 'MASGE') {
@@ -114,7 +107,7 @@ async function handleUpdatePet(token) {
     if (response.status !== 'OK') {
         return console.error(`\n❌ Error de comunicación: ${response.message || response.data}\n`);
     }
-    
+
     // --- CORREGIDO: Verificamos el contenido de la respuesta ---
     if (response.data === 'MASUP;MASCOTA_ACTUALIZADA') {
         console.log(`\n✅ ¡Mascota actualizada con éxito!\n`);
@@ -132,7 +125,7 @@ async function handleDeletePet(token) {
     const transactionData = `MASDE;${token};${petId}`;
     const response = await bus.send('CLIEN', transactionData);
 
-     if (response.status !== 'OK') {
+    if (response.status !== 'OK') {
         return console.error(`\n❌ Error de comunicación: ${response.message || response.data}\n`);
     }
 
@@ -144,6 +137,13 @@ async function handleDeletePet(token) {
     }
 }
 
+// --- ESTA ES LA LÍNEA CLAVE ---
+// Exportamos todas las funciones para que puedan ser reutilizadas por otros módulos.
 module.exports = {
-    handlePetManagement
+    handlePetManagement,
+    handleCreatePet,
+    handleListPets,
+    handleGetSinglePet,
+    handleUpdatePet,
+    handleDeletePet
 };
