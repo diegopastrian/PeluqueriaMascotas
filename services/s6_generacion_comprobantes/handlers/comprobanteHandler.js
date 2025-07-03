@@ -20,7 +20,23 @@ function handleGenerateComprobante(fields, serviceSocket) {
 
     // --- SIMULACIÓN DE GENERACIÓN DE PDF ---
     console.log(`[COMPR] Simulación: Generando comprobante de tipo '${tipo}' para la referencia ID '${id_referencia}'.`);
+    const pdfLink = `https://example.com/comprobantes/${tipo.toLowerCase()}_${id_referencia}.pdf`;
+    // --- FIN SIMULACIÓN ---
     
+    // (FLUJO TRANSACCIONAL) Invocar a S4 para notificar al cliente
+    
+    // --- LÍNEAS MODIFICADAS PARA EVITAR ERRORES DE CODIFICACIÓN ---
+    // Se usan guiones en lugar de espacios y se elimina el carácter '#'
+    const asunto = `Comprobante-Orden-${id_referencia}-Listo`;
+    const mensaje = `Hola-hemos-generado-tu-comprobante-Puedes-descargarlo-aqui-${pdfLink}`;
+    // --- FIN DE LÍNEAS MODIFICADAS ---
+
+    // Payload para S4: enviar;id_cliente;tipo_notif;canal;asunto;mensaje
+    const notifPayload = `enviar;${id_cliente};COMPROBANTE;EMAIL;${asunto};${mensaje}`;
+    const notifTransaction = buildTransaction('NOTIF', notifPayload);
+    
+    console.log(`[COMPR] Invocando al servicio NOTIF (S4): ${notifTransaction}`);
+    serviceSocket.write(notifTransaction);
 
     // Este servicio no necesita esperar la respuesta de S4. Su trabajo termina aquí.
     // La respuesta se la dio S5 al cliente original. Esto es una acción de fondo.
