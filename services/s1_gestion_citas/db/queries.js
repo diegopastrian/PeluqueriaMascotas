@@ -236,7 +236,7 @@ async function getDailyAvailability(dateStr, idServicio) {
         SELECT
           c.id_empleado,
           c.fecha AS start_time,
-          (c.fecha + COALESCE(SUM(s.tiempo_estimado), '30 minutes'::interval)) AS end_time
+          (c.fecha + COALESCE(SUM(s.tiempo_estimado), '60 minutes'::interval)) AS end_time
         FROM citas c
                LEFT JOIN cita_servicios cs ON c.id_cita = cs.id_cita_servicio
                LEFT JOIN servicios s ON cs.id_servicio = s.id_servicio
