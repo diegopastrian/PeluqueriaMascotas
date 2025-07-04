@@ -229,7 +229,7 @@ async function getDailyAvailability(dateStr, idServicio) {
                  -- Usamos timestamp simple, que tomará la zona horaria del servidor de la DB
                    ($1::date + $2::time)::timestamp,
                    ($1::date + $3::time - $4::interval)::timestamp,
-                   '30 minutes'::interval
+                   '60 minutes'::interval
                ) AS slot_start
       ),
       BookedRanges AS (
