@@ -208,7 +208,7 @@ const { action: mainAction } = await inquirer.prompt([
 
         const body = response.data.split(';').slice(1).join(';');
 
-        if (body.includes('No hay órdenes')) {
+        if (body.includes('No hay ordenes')) {
           console.log('📭 No hay órdenes en ese rango.');
         } else {
           const rows = body.split('|').map(row => {
