@@ -13,8 +13,8 @@ module.exports = {
     secret: 'tu_clave_secreta_muy_segura',
   },
   schedule: {
-    startHour: '09:00', // Hora de inicio laboral
-    endHour: '17:00',   // Hora de fin laboral
+    startHour: '08:00', // Hora de inicio laboral
+    endHour: '15:00',   // Hora de fin laboral
     slotInterval: 180,   // Intervalo en minutos
   },
 };
