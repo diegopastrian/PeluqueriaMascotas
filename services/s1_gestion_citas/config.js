@@ -14,7 +14,7 @@ module.exports = {
   },
   schedule: {
     startHour: '08:00', // Hora de inicio laboral
-    endHour: '15:00',   // Hora de fin laboral
+    endHour: '13:59',   // Hora de fin laboral
     slotInterval: 180,   // Intervalo en minutos
   },
 };
